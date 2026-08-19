@@ -14,7 +14,7 @@ Revision: 4 (three rounds of adversarial spec review applied; see Reviewer Conce
 | 1 | Folder/file structure | [Folder structure](#folder-structure-deliverable-1) |
 | 2 | Template format per process | [Entry contract](#entry-contract-deliverable-2) |
 | 3 | GitHub Pages publishing | [Site and publishing](#site-and-publishing-deliverable-3) |
-| 4 | Ready for per-project status tracking | [Status tracking](#status-tracking-deliverable-4) |
+| 4 | Ready for per-project status tracking | [Status tracking](#status-tracking-deliverable-4-resolves-premise-3) |
 | 5 | Contribution policy for PRs | [Contribution policy](#contribution-policy-deliverable-5) |
 | 6 | AI generation skills | [AI generation](#ai-generation-deliverable-6) |
 | 7 | Anything else relevant | [Beyond the brief](#beyond-the-brief-deliverable-7) |
