@@ -2,15 +2,15 @@
 id: SDLC-0001
 slug: weak-signal-monitoring
 title: Weak Signal Monitoring
-summary: Detecting the quiet precursors of failure, such as saturation trends and slow error-budget burn, early enough to act before they become user-visible incidents.
+summary: Watching signals that are too small to alert on, where the rate or the pattern matters rather than the single event, so you can act before something becomes an incident.
 category: monitoring
 subcategory: observability-signals
 lifecycle_phase: [operate]
 adoption_level: 3
 effort: high
 automatable: partial
-applies_to: [backend, infra, data]
-tags: [observability, reliability, incident-response]
+applies_to: [web, backend, infra, data]
+tags: [observability, reliability, incident-response, security]
 sources:
   - title: "Google SRE Book, Chapter 6: Monitoring Distributed Systems"
     url: https://sre.google/sre-book/monitoring-distributed-systems/
@@ -27,167 +27,170 @@ generated_by: assistant:claude-opus-5
 
 ## Purpose
 
-Most monitoring answers "is it broken now?" Weak signal monitoring answers "is it about to
-break, and has it been telling us so for a while?"
+One 404 means nothing. Nobody should be paged for it.
 
-Every signal in the golden four can be read two ways. Saturation as a threshold gives you
-"the disk is full." Saturation as a trend gives you what the SRE book calls "predictions of
-impending saturation, such as 'It looks like your database will fill its hard drive in 4
-hours.'" The same chapter notes that 99th percentile response times "can give a very early
-signal of saturation" long before averages move. The data is usually already being
-collected. What is missing is a practice that treats a small deviation as a window into
-system fragility rather than as noise to be filtered out.
+A thousand 404s an hour, all hitting `/.env`, `/wp-admin`, and `/admin.php`, means someone
+is looking for a way in. Nothing is broken. No alert will fire. But something has changed,
+and you want to know about it.
 
-The organizational half matters as much as the technical half. High reliability organizations
-practice what Weick and Sutcliffe call preoccupation with failure: small signals of failure
-are treated as evidence about the system, not as exceptions to be dismissed. Their finding is
-that disasters incubate not because the hazard was invisible, but because the conditions
-prevented weak signals from being noticed, shared, or escalated. A team can have perfect
-telemetry and still miss every precursor.
+That is a weak signal: too small to alert on, where the **rate or the pattern** is
+interesting rather than the event.
+
+Most monitoring asks "is it broken right now?" Weak signal monitoring asks a different
+question: "is something changing that will matter later?"
+
+**This is not a sixth kind of monitoring.** Performance, access, errors, throughput and logs
+are places you look. Weak signal monitoring is a way of reading any of them. The same access
+log that answers "who is using us" also answers "is one client scraping everything we have."
+Same data, different question.
+
+| Where you look | The weak signal | What it can mean |
+|---|---|---|
+| Errors | 404 rate, and which paths | Recon, a broken deploy, dead inbound links, old clients still calling a removed endpoint |
+| Access logs | Request pattern from one client or ASN | Scraping, rising bandwidth cost, credential stuffing |
+| Performance | p99 latency climbing while the average stays flat | Saturation on the way |
+| Capacity | Disk projected to fill in four hours | You are about to run out of space |
+| SLO burn | Error budget burning at 1x for three days | A slow leak nobody has noticed |
+
+The data is usually already there. What is usually missing is someone treating a small change
+as information instead of noise.
+
+The hard part is not technical. Research on high-reliability organizations found that
+disasters build up slowly, and not because the warning was invisible. They build up because
+nobody passed the warning on. You can have perfect dashboards and still miss every early
+warning, because the person who saw it was not sure it counted.
 
 ## What Good Looks Like
 
-Observable properties, each checkable by asking rather than by inspecting a dashboard:
+You can check each of these by asking someone, not by opening a dashboard.
 
-- Someone on the team can answer **"what is degrading right now that is not yet broken?"**
-  from memory. Needing to go and look means the answer is not being tracked, only recorded.
-- Every finite resource has a **projected exhaustion date with a horizon longer than the lead
-  time to add capacity**. A four-hour disk forecast is useless if provisioning takes a week.
-- The weak-signal queue has **one named owner**, a grooming cadence, and items that close with
-  a recorded decision: fixed, accepted with a rationale and a review date, or noise with the
-  threshold changed. Items do not age out silently.
-- Postmortems answer **"was this visible beforehand, and where?"** and the answer is usually
-  no. A team early in the practice will find the answer is usually yes; that gap closing over
-  time is the signal the practice is working.
-- **Raised thresholds carry a reason and a review date.** A threshold quietly loosened is
-  indistinguishable from a precursor ignored.
-- Near-misses are written up with the same rigour as outages, because a failure the system
-  recovered from by luck is a free lesson about fragility.
+- Somebody can answer **"what is getting worse right now that is not broken yet?"** from
+  memory. If they have to go and look, it is being recorded, not watched.
+- Every resource that can run out has a **forecast that reaches further ahead than your fix
+  takes**. A four-hour disk warning is useless if provisioning takes a week.
+- The weak-signal queue has **one named owner**. Items get closed with a decision, not left
+  to rot: fixed, accepted on purpose with a reason and a date to revisit, or reclassified as
+  noise with the threshold changed.
+- Postmortems answer **"could we have seen this coming?"** and the answer is usually no. Early
+  on the answer will usually be yes. That flipping over time is how you know this is working.
+- When somebody raises a threshold, **the reason is written down** and a review date is set.
+- Near misses get written up too. A failure you survived by luck is a free lesson.
 
 ## Best Practices
 
-- **Route weak signals to a queue, never to a pager.** A precursor is by definition not yet
-  urgent. Paging on it produces the fatigue the SRE book describes, where people "second-guess,
-  skim, or even ignore incoming alerts." Give it a ticket, an owner, and a business-hours SLA.
-- **Alert on the derivative, not the level.** Replace "disk above 85%" with "projected to
-  exhaust within N days," where N exceeds your lead time to act. The threshold tells you it is
-  too late; the trend tells you while you can still do something.
-- **Watch high percentiles, not means.** p99 latency degrades while the average sits flat.
-  Aggregations that average across a fleet hide the one instance that will fail first.
-- **Add a slow-burn tier to SLO alerting.** Alongside fast-burn pages, run the Workbook's 1x
-  burn rate over three days as a *ticket*. It catches sustained low-level degradation that
-  "can exhaust your error budget if left unchecked," and the ticket routing is the point, not
-  a compromise.
-- **Require every weak-signal item to close with a recorded decision.** Fixed, accepted, or
-  reclassified as noise. Acceptance must carry a rationale and a review date. This single rule
-  is the mechanism that prevents normalization of deviance, because it makes "we have decided
-  to live with this" a dated artifact rather than a slow forgetting.
-- **Make raising a hunch cheap.** Anyone can open a weak-signal ticket without justifying it
-  first, and doing so is never penalised when it turns out to be nothing. Weick and Sutcliffe's
-  finding is that weak signals fail on the social path, not the detection path: the conditions
-  that stop a signal being shared or escalated are what let disasters incubate.
-- **Add "was this visible beforehand?" as a mandatory postmortem field.** Answering it
-  systematically converts every incident into calibration for your thresholds, and produces the
-  precursor-present rate you need to know whether any of this is working.
-- **Retain data long enough to see the drift you care about.** Detecting a quarter-long trend
-  requires a quarter of history at usable resolution. This is usually a retention-cost decision
-  masquerading as a tooling limitation.
-- **Give each precursor class a named owner, not a team.** A signal owned by everyone is
-  triaged by no one.
+- **Send weak signals to a queue, never to a pager.** An early warning is not urgent yet. Page
+  on it and people start skimming alerts. The SRE book puts it plainly: when pages come too
+  often, people "second-guess, skim, or even ignore incoming alerts." Give it a ticket, an
+  owner, and a business-hours deadline instead.
+- **Alert on the trend, not the number.** "Disk above 85%" tells you when it is nearly too
+  late. "Disk will be full in six days" tells you while you can still fix it. Pick a horizon
+  longer than your lead time to act.
+- **Watch p99, not averages.** The average stays flat while the slowest 1% gets steadily worse.
+  Averaging across a fleet also hides the one machine that will break first.
+- **Watch rates of things that are individually harmless.** 404s are the clearest example.
+  A single one is noise. The rate, and which paths, is a real signal. The same is true for
+  auth failures, retries, and cache misses.
+- **Group by client, not just by endpoint.** Scraping and credential stuffing only look
+  obvious when you aggregate per IP, per ASN, or per user agent. Totals hide them completely.
+- **Make every item close with a written decision.** Fixed, accepted, or noise. If accepted,
+  record why and when to look again. This one rule is what stops a warning quietly becoming
+  the new normal, because "we decided to live with this" ends up dated and reviewable instead
+  of just forgotten.
+- **Make raising a hunch cheap.** Anyone can open a weak-signal ticket without having to
+  justify it first, and nobody looks silly when it turns out to be nothing. Early warnings
+  usually fail on the way to being shared, not on the way to being detected.
+- **Add "could we have seen this coming?" to your postmortem template.** Every incident then
+  tunes your thresholds for free, and you learn which signals actually come before trouble in
+  your system.
+- **Keep data long enough to see the trend you care about.** Spotting a three-month drift needs
+  three months of history at useful resolution. This is a storage cost decision that often
+  hides as a tooling problem.
+- **Give each kind of signal a named owner, not a team.** A signal everyone owns gets looked at
+  by nobody.
 
 ## Automation
 
-Partially automatable, and the boundary is the point: detection automates well, judgment does
-not.
+Detection automates well. Judgement does not. That split is the whole shape of this practice.
 
-**What automates.** Multiwindow, multi-burn-rate alerting is the mechanized form of weak
-signal detection. The SRE Workbook's recommended starting point for a 99.9% SLO pairs
-fast-burn pages (14.4x burn over 1 hour, 6x over 6 hours) with a **slow-burn ticket at 1x
-burn rate over 3 days**. Pairing each long window with a short verification window of about
-1/12 its duration suppresses alerts for problems that have already stopped.
+**What you can automate.** SLO burn-rate alerting is the packaged version of this. For a 99.9%
+SLO, the SRE Workbook suggests paging on fast burn (14.4x over an hour, 6x over six hours) and
+opening a **ticket** on slow burn: 1x over three days. That last row is the weak signal, and
+sending it to a ticket instead of a pager is deliberate. Pairing each long window with a short
+one about 1/12 its length stops alerts for problems that already went away.
 
-Beyond burn rate: trend-based capacity projection (extrapolate to exhaustion rather than
-alerting on a static threshold), anomaly detection on high percentiles instead of means, and
-automated near-miss capture so recovered failures are still recorded.
+Also automatable: forecasting when a resource runs out instead of thresholding it, anomaly
+detection on percentiles rather than averages, log-based rate tracking for 404s and auth
+failures grouped by client, and capturing near misses so recovered failures still get recorded.
 
-**What does not automate.** Deciding whether a small deviation is fragility or noise. That is
-the judgment the practice exists to cultivate, and every attempt to threshold it away
-recreates the problem one level up.
+**What you cannot automate.** Deciding whether a small change is fragility or just noise. That
+judgement is the point of the practice. Every attempt to replace it with a threshold just moves
+the same problem up a level.
 
 ## Signals & Metrics
 
-- **Time-to-detection versus time-to-precursor.** The gap between when a precursor first
-  became visible in existing telemetry and when anyone acted. Retrospectively measurable
-  after any incident, and the single most honest measure of whether this practice works.
-- **Slow-burn ticket volume and disposition.** Tickets opened at 1x burn rate, and what
-  fraction led to a change versus were closed as noise. All-noise means thresholds are wrong;
-  zero volume means the alert is not wired.
-- **Precursor-present rate.** Share of incidents whose postmortem finds a signal that was
-  already visible beforehand. This should fall over time.
-- **Near-miss capture rate.** Recovered failures recorded versus estimated occurrences.
-- **Saturation projection horizon.** How far ahead exhaustion is forecast for each
-  finite resource, measured against the resource that will run out first rather than fleet
-  averages.
-- **Accepted-risk age.** How long items sit in "accepted with rationale" past their review
-  date. A growing number here is normalization of deviance with a paper trail.
+- **How long the warning was visible before anyone acted.** Measurable after any incident, and
+  the most honest measure of whether this works at all.
+- **Slow-burn ticket volume, and what happened to them.** How many led to a change versus were
+  closed as noise. All noise means your thresholds are wrong. Zero tickets means the alert is
+  not actually wired up.
+- **Share of incidents that had a visible warning first.** Should fall over time.
+- **Near misses recorded** versus roughly how many you think happened.
+- **Forecast horizon per resource.** How far ahead you can see each one running out, measured
+  against whichever runs out first rather than a fleet average.
+- **Age of accepted risks past their review date.** A growing number here is a warning becoming
+  the new normal, with a paper trail.
 
 ## Anti-Patterns
 
-- **Normalization of deviance.** The precursor is seen repeatedly, nothing bad happens yet,
-  and the abnormal reading becomes the accepted baseline. This is the dominant failure mode
-  and it is social, not technical.
-- **Threshold ratcheting.** Each time an alert fires, the threshold is raised instead of the
-  cause investigated. Mechanically indistinguishable from tuning out noise, and the most
-  common way normalization of deviance actually happens in practice.
-- **Paging on weak signals.** Covered above; the result is that real pages get skimmed.
-- **Acknowledgement as resolution.** The alert is acked, nobody is assigned, and the ack is
-  the last event in its history.
-- **Averages hiding the signal.** Mean latency is stable while p99 has been degrading for
-  weeks.
-- **Dashboards with no reader.** A precursor visible on a dashboard nobody opens on a
-  schedule was never monitored, only recorded.
-- **Cross-team precursors dying in handoff.** The signal is detected by the team that sees it
-  and the fix belongs to a team that does not, so it becomes a backlog item with no owner on
-  either side.
+- **The warning becomes the new normal.** You see it often, nothing bad happens, and the odd
+  reading turns into the baseline. This is the most common failure and it is a people problem,
+  not a tooling one.
+- **Raising the threshold instead of investigating.** The alert fires, so you move the line.
+  Looks identical to tuning out noise, and it is how warnings quietly become normal in practice.
+- **Paging on early warnings.** Covered above. The result is that real pages get skimmed.
+- **Acknowledging instead of resolving.** The alert is acked, nobody is assigned, and the ack is
+  the last thing that ever happens to it.
+- **Averages hiding the problem.** Mean latency looks fine while p99 has been sliding for weeks.
+- **Only looking at totals.** Total 404s look flat while one client's 404s went up 50x.
+- **Dashboards nobody opens.** A warning on a dashboard nobody looks at on a schedule was never
+  monitored, only stored.
+- **Warnings that belong to another team.** The team that spots it cannot fix it, and the team
+  that can fix it never sees it. It becomes a backlog item nobody owns.
 
 ## Tooling
 
-Vendor-neutral by category, since the practice is a use of tools rather than a tool:
+By category, because this is a way of using tools rather than a tool you install:
 
-- **SLO and error-budget engines** for multi-window burn-rate alerting: Sloth, Pyrra,
-  OpenSLO, Nobl9, or burn-rate rules written directly as Prometheus recording rules.
-- **Time-series backends with trend and forecast functions:** Prometheus (`predict_linear`
-  for exhaustion forecasting), Thanos or Mimir for the retention that trend analysis needs.
-- **Anomaly detection** on percentile series, native in most APM suites.
-- **Incident and near-miss registries** so recovered failures are captured, not just
-  incidents that breached.
+- **SLO and error-budget tools** for burn-rate alerting: Sloth, Pyrra, OpenSLO, Nobl9, or
+  burn-rate rules written straight into Prometheus.
+- **Time-series storage with forecasting:** Prometheus (`predict_linear` for "when will this
+  run out"), plus Thanos or Mimir for the longer retention that trends need.
+- **Log aggregation you can group by client:** Loki, OpenSearch, or `goaccess` and friends
+  against Caddy or nginx access logs. The requirement is aggregating by IP, ASN, or user agent,
+  not just counting.
+- **Anomaly detection** on percentile series. Built into most APM suites.
+- **A near-miss and incident log**, so failures you recovered from still get recorded.
 
-Retention is the underrated requirement. Detecting a quarter-long drift needs a quarter of
-data at usable resolution, which is a cost decision more than a tooling one.
+Retention is the underrated part. Seeing a three-month drift needs three months of data.
 
 ## Getting Started
 
-Three steps for a team with no SLOs and no new tooling. Step 1 pays for itself even if steps
-2 and 3 never happen.
+Three steps for a team with no SLOs and no new tools. Step 1 is worth doing on its own.
 
-1. **Audit your last five incidents for precursors (half a day, no tooling).** For each one,
-   ask: was there a signal visible beforehand in data we already had? Write down the answer,
-   the signal, and how long it was visible. You now know your precursor-present rate and,
-   more usefully, which two or three signals actually precede failure in *your* system. This
-   is the whole practice in miniature and it requires nothing but a meeting and your existing
-   dashboards.
-2. **Instrument the single most common precursor from step 1 (one day).** One signal, one
-   trend-based alert with a horizon longer than your fix lead time, routed to a ticket queue
-   with one named owner. Not a pager. Resist doing all three signals; one that closes its
-   loop beats three that nobody owns.
-3. **Add one mandatory postmortem question (one hour).** "Was this visible beforehand, and
-   where?" This makes step 1 self-sustaining instead of a one-off audit, and every future
-   incident now calibrates your thresholds for free.
+1. **Look back at your last five incidents (half a day, no tooling).** For each one ask: was
+   there a sign beforehand, in data we already had? Write down what it was and how long it was
+   visible. You now know which two or three signals actually come before trouble in your
+   system. That is the whole practice in miniature, and it costs a meeting.
+2. **Instrument the most common one (one day).** One signal. One trend-based alert with a
+   horizon longer than your fix time. One ticket queue. One named owner. Not a pager. Resist
+   doing three at once; one that gets acted on beats three that nobody owns.
+3. **Add one question to your postmortem template (one hour).** "Could we have seen this
+   coming, and where?" Now step 1 keeps happening by itself instead of being a one-off.
 
 ## References
 
-Rendered from `sources` at build time; the entries below are additional reading that does not
-qualify under conditional rule 1.
+Rendered from `sources` at build time. The rest is further reading that does not qualify under
+conditional rule 1.
 
 - Google SRE Book, Chapter 6: Monitoring Distributed Systems —
   <https://sre.google/sre-book/monitoring-distributed-systems/>
@@ -195,7 +198,7 @@ qualify under conditional rule 1.
   <https://sre.google/workbook/alerting-on-slos/>
 - Weick & Sutcliffe, *Managing the Unexpected* —
   <https://books.google.com/books/about/Managing_the_Unexpected.html?id=GU55MJOp1OcC>
-- Diane Vaughan, *The Challenger Launch Decision* — the canonical case study of
-  normalization of deviance. Verify and cite properly before promoting to `sources`.
-- Sidney Dekker, *Drift into Failure* — on systems degrading gradually while every local
+- Diane Vaughan, *The Challenger Launch Decision* — the classic case of a warning becoming
+  normal. Verify and cite properly before promoting to `sources`.
+- Sidney Dekker, *Drift into Failure* — how systems slide into trouble while every individual
   decision looks reasonable. Same caveat.
