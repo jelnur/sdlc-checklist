@@ -44,14 +44,6 @@ are places you look. Weak signal monitoring is a way of reading any of them. The
 log that answers "who is using us" also answers "is one client scraping everything we have."
 Same data, different question.
 
-| Where you look | The weak signal | What it can mean |
-|---|---|---|
-| Errors | 404 rate, and which paths | Recon, a broken deploy, dead inbound links, old clients still calling a removed endpoint |
-| Access logs | Request pattern from one client or ASN | Scraping, rising bandwidth cost, credential stuffing |
-| Performance | p99 latency climbing while the average stays flat | Saturation on the way |
-| Capacity | Disk projected to fill in four hours | You are about to run out of space |
-| SLO burn | Error budget burning at 1x for three days | A slow leak nobody has noticed |
-
 The data is usually already there. What is usually missing is someone treating a small change
 as information instead of noise.
 
@@ -59,6 +51,34 @@ The hard part is not technical. Research on high-reliability organizations found
 disasters build up slowly, and not because the warning was invisible. They build up because
 nobody passed the warning on. You can have perfect dashboards and still miss every early
 warning, because the person who saw it was not sure it counted.
+
+## Examples
+
+Each row is the same technique pointed at a different place. None of these page anyone.
+
+| Where you look | The weak signal | What it can mean |
+|---|---|---|
+| Errors | 404 rate, and which paths | Recon, a broken deploy, dead inbound links, old clients calling a removed endpoint |
+| Access logs | Request pattern per client or ASN | Scraping, rising bandwidth cost, credential stuffing |
+| Performance | p99 latency climbing while the average stays flat | Saturation on the way |
+| Capacity | Disk projected to fill in four hours | You are about to run out of space |
+| SLO burn | Error budget burning at 1x for three days | A slow leak nobody has noticed |
+| Auth | Failed-login rate per account or per IP | Credential stuffing, or a broken client retrying |
+| Dependencies | Retry and timeout rate to one upstream | That upstream is degrading before it fails |
+
+Two of these are worth spelling out, because they are the least obvious.
+
+**404 rate.** A 404 is not an error you act on individually, which is exactly why it is useful.
+Watch the rate and the paths. A burst of requests for `/.env`, `/wp-admin` and `/admin.php` is
+someone probing for a way in. A steady trickle on a path your own pages link to means you
+shipped a broken reference. A rise in 404s from external referrers means the web's links to you
+are rotting. Three different meanings from one metric, separated by looking at which paths.
+
+**Scraping patterns in access logs.** Read straight from Caddy or nginx logs. One client pulling
+every page in sequence, ignoring `robots.txt`, or walking your pagination is scraping. It rarely
+breaks anything, so nothing alerts. What it does is cost you bandwidth, take your content, and
+sometimes warm up for something worse. This one is invisible in totals and obvious the moment
+you group by IP, ASN, or user agent.
 
 ## What Good Looks Like
 
