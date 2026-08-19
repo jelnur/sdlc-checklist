@@ -5,7 +5,7 @@ Branch: main
 Repo: jelnur/sdlc-checklist
 Status: APPROVED
 Mode: Builder
-Revision: 2 (adversarial spec review applied, 29 issues)
+Revision: 3 (two rounds of adversarial spec review applied)
 
 ## Deliverable coverage
 
@@ -55,12 +55,14 @@ the same repo serves humans (a searchable, faceted site) and agents (a versioned
 
 ## Constraints
 
-- Open source, public repo, published upon initial data generation.
+- Open source. **Public from the first commit**, with a WIP notice in the README until the
+  seed set lands. GitHub Pages on a private repo requires a paid plan, so "build privately,
+  publish later" would break the $0 constraint.
 - 99% AI-managed: generation must be a repeatable skill, not a one-off prompt.
-- Must publish to GitHub Pages or equivalent, at $0 hosting cost.
-- Must be structurally ready for per-project status tracking without becoming a SaaS.
-- Must remain open to human PRs for corrections and additions.
-- English only for v1. Internationalization is explicitly out of scope (see
+- $0 hosting.
+- Structurally ready for per-project status tracking without becoming a SaaS.
+- Open to human PRs for corrections and additions.
+- English only for v1. Internationalization is out of scope (see
   [Deferred](#deferred-and-out-of-scope)).
 
 ## Premises
@@ -84,7 +86,7 @@ All six confirmed by the user during the session.
    cannot silently break the data format.
 6. **Distribution is the risk, not the build.** The pain here is chronic, not acute; nobody
    is on fire. This project fails by being unfound. So ship a versioned machine-readable
-   release artifact, not just a website.
+   release artifact, and treat launch as a work item, not an afterthought.
 
 ## Approaches Considered
 
@@ -100,10 +102,10 @@ release artifact, a `status-schema.json`, and two AI generation skills. M effort
 risk. **Chosen.**
 
 ### Approach C: Catalog as a package plus CLI
-All of B, plus an `sdlc-check` CLI, npm/PyPI publishing, and a README badge. L effort, Med
-risk. **Deferred, not rejected:** it front-loads the least certain bet (developers may want
-to read this catalog and never want it failing their CI), and it is strictly a layer on top
-of B's data artifact, so nothing is lost by waiting.
+All of B, plus an `sdlc-check` CLI, npm/PyPI publishing, and a consumer CI badge. L effort,
+Med risk. **Deferred, not rejected:** it front-loads the least certain bet (developers may
+want to read this catalog and never want it failing their CI), and it is strictly a layer on
+top of B's data artifact.
 
 ## Recommended Approach
 
@@ -117,8 +119,8 @@ alone does not do it:
 - **Judgment** is guided by written rubrics (`_meta/rubrics.md`). A schema validates that
   `effort: medium` is a legal value; only a rubric makes two entries agree on what `medium`
   means. `catalog-write` must cite the rubric clause it matched.
-- **Drift** is caught by periodic sample audit: re-score 20 random published entries per 100
-  added, and treat disagreement as a rubric bug.
+- **Drift** is caught by `audit-sample.mjs`: 20 random published entries re-scored per 100
+  added. Disagreement is treated as a rubric bug, not an entry bug.
 
 Dropping any one of the three and expecting the other two to cover it is the failure mode.
 
@@ -128,46 +130,45 @@ Four separate concerns, because conflating them is what breaks status tracking:
 
 - **`id`** — opaque, immutable, sequential, never reused, never renumbered: `SDLC-0142`.
   Carries no category meaning, which is the point: re-categorizing a process creates no
-  pressure to renumber it. This is the key `catalog.json` and every user's status file use.
+  pressure to renumber it. This is the key `catalog.json` and every status file use.
 - **`slug`** — immutable, unique across the whole catalog, flat namespace:
-  `error-monitoring`. Drives the URL `/p/error-monitoring`.
+  `error-monitoring`. Drives the URL `/p/error-monitoring/`.
 - **`category` / `subcategory`** — mutable navigation metadata, validated as foreign keys
   into `categories.yaml`.
 - **Folder path** — editing convenience. Carries no meaning the build reads.
-
-**URLs are flat and derived from `slug`, never from folder path.** Move a file between
-folders and no URL and no status file changes.
 
 Semantic IDs (`MON-003`) were considered and rejected: they read better, but they invite
 renumbering on re-categorization, which is the exact failure premise 1 forbids.
 
 **`_meta/id-registry.yaml` is the allocator and the enforcement surface.** Append-only, one
 row per ID ever issued (`id`, `slug`, `first_seen`, `state: active|deprecated`). Without it,
-"never reused" is unenforceable: delete a file, and its ID looks free again and gets reissued
-to a different process, silently corrupting every status file that referenced it.
+"never reused" is unenforceable: delete a file and its ID looks free again, gets reissued to
+a different process, and silently corrupts every status file that referenced it.
 
-- Allocation happens **once, at backlog approval**, writing the row. `new-process.mjs` reads
-  the already-assigned ID and never allocates. Allocation serializes through `main`; parallel
-  skill runs rebase rather than allocate.
-- CI rejects any diff that removes or mutates an existing registry row, and any new `id` at
-  or below the registry high-water mark.
+- Allocation happens **once, at backlog approval**, via `scripts/approve-backlog.mjs`, which
+  appends the registry row and writes the `id` back onto the backlog item atomically.
+  `new-process.mjs` reads that already-assigned `id` and never allocates. A human never
+  hand-computes an ID.
+- **Per-field mutability:** `id`, `slug`, `first_seen` are immutable. `state` may transition
+  `active → deprecated` and never back. (Revision 2 said "removes or mutates," which made the
+  required deprecation transition impossible.)
 
 **Splits and merges are first-class, because at 400 entries they will happen.** `superseded_by`
 is an **array** of IDs, paired with `supersede_reason: renamed | split | merged | obsolete`.
-That expresses 1→N and N→1, which a scalar cannot. `build-catalog.mjs` emits an `id_map`
-section in `catalog.json` so a consumer can migrate a status file mechanically instead of by
-hand. Deprecate, never delete: `status: deprecated` keeps the ID valid forever.
+That expresses 1→N and N→1, which a scalar cannot. `build-catalog.mjs` emits `id_map` in
+`catalog.json` so a consumer migrates a status file mechanically. Deprecate, never delete.
 
 ### Folder structure (deliverable 1)
 
 ```
 sdlc-checklist/
-├── README.md                       # anti-goals + CI-generated count badge (published only)
+├── README.md                       # WIP notice, anti-goals, count badge, sampling disclosure
 ├── LICENSE                         # MIT — code
-├── LICENSE-CONTENT                 # CC BY 4.0 — content, with explicit per-path table
+├── LICENSE-CONTENT                 # CC BY 4.0 — content, explicit per-path table
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
-├── package.json                    # npm run validate | build | audit
+├── .gitignore                      # dist/, site/public/llms.txt, site/public/index-compact.json
+├── package.json                    # npm workspaces: root + site
 ├── package-lock.json
 ├── catalog/                        # the data — one markdown file per process
 │   ├── _meta/
@@ -176,7 +177,7 @@ sdlc-checklist/
 │   │   ├── tags.yaml               # closed tag vocabulary
 │   │   ├── rubrics.md              # what medium/high/level-2 actually mean
 │   │   ├── inclusion-rule.md       # what is and is not an SDLC process
-│   │   ├── schema-version          # single integer, bumped on breaking frontmatter change
+│   │   ├── schema-version          # single integer
 │   │   └── backlog/                # one file per category, never one global file
 │   │       ├── monitoring.yaml
 │   │       └── testing.yaml
@@ -195,21 +196,28 @@ sdlc-checklist/
 ├── schema/
 │   ├── process.schema.json
 │   ├── categories.schema.json
+│   ├── tags.schema.json
+│   ├── id-registry.schema.json
 │   ├── backlog.schema.json
+│   ├── catalog.schema.json         # shape of the published artifact
 │   └── status.schema.json
 ├── scripts/
-│   ├── validate.mjs                # schema + headings + registry + refs + internal links
-│   ├── build-catalog.mjs           # markdown → dist/catalog.json (+ id_map), site/public/llms.txt
-│   ├── build-index.mjs             # compact index fed to both generation skills
-│   ├── backfill-related.mjs        # makes related: edges bidirectional
-│   ├── audit-sample.mjs            # re-scores N random entries against rubrics
-│   ├── new-process.mjs             # scaffolds from an APPROVED backlog item; never allocates
-│   └── migrations/                 # one script per schema-version bump
+│   ├── validate.mjs                # schema + headings + registry bijection + refs + links
+│   ├── approve-backlog.mjs         # THE allocator: approved item → registry row → id
+│   ├── build-catalog.mjs           # → dist/catalog.json (+ id_map)
+│   ├── build-index.mjs             # → site/public/index-compact.json (facets + skill input)
+│   ├── build-llms.mjs              # → site/public/llms.txt
+│   ├── backfill-related.mjs        # mirrors related: edges with correct inversion
+│   ├── audit-sample.mjs            # emits a review worksheet; human scores it
+│   ├── new-process.mjs             # scaffolds from an approved backlog item; never allocates
+│   └── migrations/                 # required only after the first tagged release
 ├── site/                           # Astro + Starlight
+│   ├── package.json                # workspace member; Astro needs its own manifest
 │   ├── astro.config.mjs
 │   ├── src/content.config.ts
-│   └── public/llms.txt             # must be served at /llms.txt
-├── dist/                           # build output, gitignored
+│   ├── src/pages/p/[slug].astro    # we own this route — see Site and publishing
+│   └── public/                     # llms.txt + index-compact.json land here, gitignored
+├── dist/                           # gitignored
 │   └── catalog.json
 ├── examples/
 │   └── sdlc-status.example.yaml
@@ -217,8 +225,9 @@ sdlc-checklist/
 │   ├── CODEOWNERS
 │   ├── workflows/
 │   │   ├── validate.yml            # PR gate — fetch-depth: 0
+│   │   ├── review-gate.yml         # pull_request_review — the publish approval check
 │   │   ├── publish.yml             # Pages deploy + release artifacts
-│   │   └── link-check.yml          # nightly external URL check, cached
+│   │   └── link-check.yml          # nightly external URLs, cached
 │   ├── ISSUE_TEMPLATE/propose-process.yml
 │   └── pull_request_template.md    # ONE default; GitHub cannot auto-apply multiple
 └── .claude/skills/
@@ -226,125 +235,190 @@ sdlc-checklist/
     └── catalog-write/SKILL.md
 ```
 
-Glob rules, stated once so the loader and the validator agree: entries are
-`catalog/**/[^_]*.md`. Everything under `_meta/` and every `_category.md` is excluded from
-the entry set.
+**Build order is an explicit chain**, since three generated files land in tracked directories:
+`npm run build` = `build-catalog → build-index → build-llms → astro build`. All three outputs
+are gitignored so no working tree goes dirty and no committed copy goes stale.
+
+**Entry glob, stated once so the loader and the validator use the identical pattern:**
+
+```js
+['**/[^_]*.md', '!**/_*/**']
+```
+
+The second term is required. `**/[^_]*.md` alone does **not** exclude `_meta/`: in picomatch
+`**/` matches the `_meta` directory freely and `[^_]*` constrains only the filename, so
+`_meta/rubrics.md` would load as a catalog entry and fail schema validation at build time.
 
 ### Entry contract (deliverable 2)
 
 Frontmatter carries only what gets queried, filtered, or indexed (the
 [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) rule); prose
-lives in the body.
+lives in the body. `additionalProperties: false`.
 
 | Field | Req | Type / pattern | Notes |
 |---|---|---|---|
 | `id` | yes | `^SDLC-\d{4}$` | immutable; must exist in `id-registry.yaml` |
 | `slug` | yes | `^[a-z0-9]+(-[a-z0-9]+)*$`, ≤60 | immutable, globally unique |
-| `title` | yes | string, ≤80 | |
-| `summary` | yes | string, ≤200 | maps to Starlight `description` |
-| `category` | yes | enum ← `categories.yaml` | foreign key, validated |
+| `title` | yes | string, 1-80 | |
+| `summary` | yes | string, 1-200 | passed to the page as `description` |
+| `category` | yes | enum ← `categories.yaml` | foreign key |
 | `subcategory` | no | enum ← `categories.yaml` | must belong to `category` |
-| `lifecycle_phase` | yes | array, ≥1, enum | `plan\|design\|build\|verify\|release\|operate\|govern` |
-| `adoption_level` | yes | int 1-4 | org tier at which this is adopted; see rubrics |
+| `lifecycle_phase` | yes | array, minItems 1, uniqueItems | `plan\|design\|build\|verify\|release\|operate\|govern` |
+| `adoption_level` | yes | int 1-4 | org tier at which this is adopted; rubric-defined |
 | `effort` | yes | `low\|medium\|high` | rubric-defined |
 | `automatable` | yes | `none\|partial\|full` | rubric-defined |
-| `applies_to` | yes | array, closed enum | `web\|backend\|mobile\|data\|ml\|embedded\|infra` |
-| `tags` | yes | array, ≥1, enum ← `tags.yaml` | closed vocabulary |
-| `related` | no | array of `{id, rel}` | `rel`: `same-concern\|prerequisite\|complements\|contrasts` |
-| `sources` | yes | array, ≥1, `{title, url, type}` | `type`: `standard\|book\|paper\|vendor-doc\|practice-report` |
+| `applies_to` | yes | array, minItems 1, uniqueItems | `any\|web\|backend\|mobile\|data\|ml\|embedded\|infra`; `any` is exclusive |
+| `tags` | yes | array, minItems 1, enum ← `tags.yaml` | closed vocabulary |
+| `related` | no | array of `{id, rel}`, uniqueItems | `rel`: `same-concern\|complements\|contrasts\|prerequisite\|enables`; `id` ≠ own id |
+| `sources` | yes | array, minItems 1, `{title, url, type}` | `url` `format: uri`, absolute, unique within entry |
+| `source_exception` | no | string, ≥40 | required iff conditional rule 1's escape valve is used |
 | `status` | yes | `draft\|review\|published\|deprecated` | |
-| `superseded_by` | no | array of ids | |
+| `superseded_by` | no | array of ids, minItems 1 | must not contain own id |
 | `supersede_reason` | no | `renamed\|split\|merged\|obsolete` | |
-| `generated_by` | yes | string | provenance |
-| `reviewed_by` | no | GitHub login | |
-| `last_reviewed` | no | ISO date | |
+| `generated_by` | yes | `^(human:[a-zA-Z0-9-]+\|catalog-write@\d+\.\d+\.\d+)$` | provenance; hand-written entries use `human:<login>` |
+| `reviewed_by` | no | GitHub login | approver of record |
+| `review_depth` | no | `full\|sampled` | see the review-honesty rule below |
+| `last_reviewed` | no | `format: date` | |
 
-Three conditional rules the schema must encode:
+Conditional rules 1 and 2 are `if/then` in JSON Schema. Rule 3 is a cross-file foreign key
+that only `validate.mjs` can enforce.
 
-1. `status: published` requires `reviewed_by`, `last_reviewed`, **and** at least one
-   `sources[]` entry of type `standard`, `book`, or `paper`. `practice-report` and
-   `vendor-doc` are supplementary only. Without this, the long tail drifts into blog posts
-   wearing a standards costume, and premise 4's guard is weakest exactly where the risk is
-   highest.
+1. `status: published` requires `reviewed_by`, `review_depth`, `last_reviewed`, **and** at
+   least one `sources[]` entry of type `standard`, `book`, or `paper`. `practice-report` and
+   `vendor-doc` are supplementary. **Escape valve:** two independent `practice-report`
+   sources from unaffiliated authors also qualify, and then `source_exception` must state
+   why no standard exists. Without the valve, exactly the long-tail entries this catalog
+   exists for (`weak-signal-monitoring` among them) strand at `status: review` forever.
 2. `status: deprecated` requires `superseded_by` and `supersede_reason`.
-3. `related[].id` must exist in `id-registry.yaml`. It need **not** be written yet, so
-   forward references to approved-but-unwritten entries are legal. `backfill-related.mjs`
-   makes edges bidirectional and CI asserts symmetry.
+3. Every `related[].id` and `superseded_by[]` id must exist in `id-registry.yaml`. It need
+   **not** be written yet, so forward references to approved-but-unwritten entries are legal.
 
 **`adoption_level`, not `maturity`.** The earlier name meant two different things in one
-field: how mature the practice is, and the org tier at which a team adopts it. A single
-integer cannot be both.
+field: how mature the practice is, and the org tier at which a team adopts it.
 
-**Body sections.** Split into two tiers, because nine mandatory sections do not survive
-contact with a governance or process-only entry (`## Automation` for blameless postmortems,
-`## Tooling` for anything vendor-neutral by nature). Filler is worse than an honest N/A.
+**`related` edge direction.** `same-concern`, `complements`, `contrasts` are symmetric;
+`backfill-related.mjs` mirrors them unchanged and CI asserts symmetry. `prerequisite` is
+**not** symmetric: `A --prerequisite--> B` mirrors to `B --enables--> A`. Asserting plain
+symmetry on a directional edge would invert meaning across 400 entries.
 
-*Required always:* `## Purpose`, `## What Good Looks Like`, `## Best Practices`,
+**Body sections.** Nine headings are always present; three of them may carry an explicit N/A.
+The tiering is about which ones may be waived, not about which appear, because a governance
+entry has no honest `## Automation` and filler is worse than a reasoned N/A.
+
+*Never waivable:* `## Purpose`, `## What Good Looks Like`, `## Best Practices`,
 `## Anti-Patterns`, `## Getting Started`, `## References`.
 
-*Required if applicable:* `## Automation`, `## Signals & Metrics`, `## Tooling`. These may
-carry exactly `N/A — <reason>`. The linter accepts that literal prefix and rejects an empty
-heading, so skipping is always a visible, reasoned choice.
+*Waivable with reason:* `## Automation`, `## Signals & Metrics`, `## Tooling`.
+
+The waiver body must match `^N/A\s*[—–-]\s+\S.{9,}` — dash variants tolerated and autofixed
+to the em dash, minimum ten characters of reason so `N/A — n/a` fails. Heading **order** is
+enforced against the canonical list. `## References` is rendered from `sources[]` at build
+time; the linter checks only that the heading exists, and an author may append further
+reading that does not qualify under rule 1.
 
 `## Anti-Patterns` and `## Getting Started` are what separate this from an awesome-list.
-Never optional.
 
 ### Site and publishing (deliverable 3)
 
 **Information architecture.** Frontmatter defines filter fields, so something must consume
-them; at 400 entries "how do I find the 12 that apply to me" is the entire product
-experience.
+them; at 400 entries "how do I find the 12 that apply to me" is the entire product.
 
-- `/` — category matrix, the DSOMM-style overview and the default landing.
-- `/p/{slug}` — entry page.
-- `/browse` — faceted list. Facets: `category`, `lifecycle_phase`, `adoption_level`,
-  `applies_to`, `automatable`, `tags`. Client-side over the built index; no server.
-- Sidebar is generated from `_meta/categories.yaml`. **Not** from directory structure, which
+- `/` — category matrix, the DSOMM-style overview and default landing.
+- `/p/{slug}/` — entry page.
+- `/browse` — faceted list over `site/public/index-compact.json`, client-side, no server.
+  Facets: `category`, `lifecycle_phase`, `adoption_level`, `applies_to`, `automatable`,
+  `tags`. This is the second nontrivial UI piece after the deferred tracker; start with
+  Pagefind's built-in filters and only hand-build facets if Pagefind proves insufficient.
+- Sidebar generated from `_meta/categories.yaml`. **Not** from directory structure, which
   flat URLs make unavailable.
-- The content loader includes only `status: published | deprecated`. `catalog.json` includes
-  drafts solely under `--include-drafts`.
 
-**Starlight integration, the real mechanism.** This is a day of work, not a config line, and
-one detail is a trap:
+**Starlight integration — decided, not deferred.** Revision 2 left the routing choice open
+and its three bullets contradicted each other. The decision:
 
-- **`slug` collides with Starlight's reserved frontmatter key**, which overrides a page's
-  URL. Left alone, `slug: error-monitoring` yields `/error-monitoring`, not
-  `/p/error-monitoring`. Fix in the loader, not in 400 files: a custom `glob({ base:
-  '../catalog', pattern: '**/[^_]*.md' })` with `generateId: ({ data }) => 'p/' + data.slug`.
-- Every catalog field must be declared via `docsSchema({ extend: … })` or validation fails on
-  unknown keys. Map `summary → description`.
+**Own the route. Name the collection `processes`, not `docs`.**
+
+- A `glob()` loader cannot filter on frontmatter; it loads everything. Filtering happens in
+  `getStaticPaths`. If Starlight's built-in `[...slug]` route renders the collection, we do
+  not own `getStaticPaths` and **cannot exclude `draft`/`review` entries** — they would all
+  publish. That alone decides it.
+- Naming the collection `processes` means Starlight injects no route of its own, so there is
+  no collision and no duplicate `/{slug}` page for all 400 entries.
+- Because we own `src/pages/p/[slug].astro` and render through `<StarlightPage>`, the
+  `slug` frontmatter key **no longer collides** with Starlight's reserved `slug`, and the
+  `generateId` prefix trick from revision 2 becomes unnecessary. `summary` is passed
+  explicitly as the page's `description` prop rather than renamed by a schema transform.
+- `docsSchema({ extend })` is therefore not used. The loader declares its own Zod schema,
+  generated from `process.schema.json` via `json-schema-to-zod` so the two cannot drift.
+  Note that Zod **strips** unknown keys silently rather than rejecting them, so a field
+  missing from the Zod schema does not error, it vanishes and its facet renders empty.
+  `validate.mjs` asserts key-set equality between the JSON Schema and the generated Zod
+  schema to catch exactly that.
 - Content outside `srcDir` needs `vite.server.fs.allow: ['..']`, and HMR across that boundary
   is unreliable. Builds are fine; `astro dev` may need restarts on content edits.
-- Decide explicitly: Starlight's `[...slug]` route, or `src/pages/p/[slug].astro` wrapping
-  `<StarlightPage>`. The custom route is the safer fit for a non-docs URL shape.
+- URLs carry a trailing slash under Astro's default `build.format: 'directory'`.
+- The loader accepts `.md` only. If MDX components in entry bodies are wanted later, that is
+  a deliberate change, not an assumption.
 
-Material for MkDocs remains the equally safe alternative if you would rather stay in Python;
-the content layer does not care. Justification for Starlight rests on built-in search, MDX
-components, and the content layer, not on the deferred tracker.
+Material for MkDocs remains a viable alternative; the content layer does not care.
 
 **Pipelines.**
 
-- `validate.yml` on PR, `fetch-depth: 0`: JSON Schema, heading linter, registry integrity,
-  `categories.yaml`/`tags.yaml` foreign keys, `related` symmetry, and **internal** link
-  resolution only.
-- `link-check.yml` nightly: external URLs, cached, with an allowlist for hosts that 403
-  bots. Checking thousands of external URLs on every PR guarantees chronic false failures.
-- `publish.yml` on push to `main`: build site → deploy Pages, and publish
-  `dist/catalog.json` to Pages stamped `catalog_version: "2026.08.1+dev.<sha>"`. On a version
-  tag, attach the artifact to the GitHub Release. Releases are the only pinnable version;
-  without the dev stamp there is no defined version between tags and `catalog_version` drift
-  detection is meaningless.
+- `validate.yml` on `pull_request`, `fetch-depth: 0`: JSON Schema, key-set equality, heading
+  linter, registry integrity (below), foreign keys into `categories.yaml` and `tags.yaml`,
+  `related` symmetry with correct inversion, and **internal** link resolution across
+  `catalog/**` and `docs/**`.
+- `review-gate.yml` on `pull_request_review: [submitted, dismissed]`: for any diff flipping
+  `status:` to `published`, query `gh api /repos/{o}/{r}/pulls/{n}/reviews` and require an
+  approving review from a CODEOWNER whose login equals `reviewed_by`. Registered as a
+  required status check. A `pull_request` event does not re-fire on review submission, which
+  is why this is a separate workflow.
+- `link-check.yml` nightly: `lychee --cache` with the cache restored via `actions/cache`,
+  plus an allowlist for hosts that 403 bots. On failure it opens or updates a single tracking
+  issue rather than turning a cron red, which gets ignored within two weeks. Checking 1,200+
+  external URLs on every PR would guarantee chronic false failures.
+- `publish.yml` on push to `main`: build → deploy Pages, and publish `catalog.json` stamped
+  `catalog_version: "2026.08.1+dev.<sha>"`. On a version tag, attach it to the GitHub
+  Release. Releases are the only pinnable version.
 
-**ID immutability check, done correctly.** The obvious implementation (diff each changed file
-against `main`, compare `id`) fails on exactly the case this design exists to enable: a file
-moving between category folders is delete+add to git, so a path-keyed check finds no baseline
-and passes silently. Instead, build the `(id, slug)` set from the PR head and from
-`origin/main` via the registry and assert: every pair on `main` still exists in head (keyed
-on `id`, so moves and renames are invisible to it); no `id` maps to a new `slug`; no new `id`
-at or below the high-water mark.
+**Registry integrity, done correctly.** Revision 2 compared registry-to-registry only, which
+misses the entry-to-registry binding entirely. As specified there, swapping the `id:` values
+in two entry files passed CI: registry diff empty, both IDs exist, both slugs unique, every
+status file now pointing at the wrong process. The full rule set:
 
-**Schema evolution.** `_meta/schema-version` holds a single integer. A breaking frontmatter
-change bumps it and ships `scripts/migrations/<n>.mjs`; CI refuses a bump without one.
+1. Every `(id, slug)` pair on `origin/main` still exists in head. Keyed on `id`, so
+   cross-folder moves and file renames are invisible to it — the failure that a per-path diff
+   hits, since git sees delete+add and finds no baseline.
+2. No `id` maps to a new `slug`; `first_seen` unchanged; `state` only `active → deprecated`.
+3. No new `id` at or below the registry high-water mark.
+4. **Bijection:** for every entry file, `registry[entry.id].slug === entry.slug`. Every
+   registry row is matched by at most one entry file, and every entry file has a row. Rows
+   with no file are legal (approved but unwritten).
+5. Registry IDs are unique and strictly increasing. Two PRs appending `SDLC-0143` at
+   different file offsets auto-merge cleanly, so "allocation serializes through `main`" must
+   be backed by this check plus branch protection's "require branches to be up to date."
+6. `registry[id].state === 'deprecated'` iff `entry.status === 'deprecated'`.
+
+**`catalog.json` shape**, defined by `schema/catalog.schema.json`:
+
+```json
+{
+  "catalog_version": "2026.08.1",
+  "schema_version": 1,
+  "generated_at": "2026-08-19T00:00:00Z",
+  "categories": [ ... ],
+  "tags": [ ... ],
+  "processes": [ ... ],
+  "id_map": [ { "from": "SDLC-0142", "to": ["SDLC-0500", "SDLC-0501"], "reason": "split" } ]
+}
+```
+
+Published entries only, unless built with `--include-drafts`, which includes both `draft`
+and `review`.
+
+**Schema evolution.** `_meta/schema-version` starts at 1. Migration scripts are required only
+**after the first tagged release**. Before that there are zero external consumers and fewer
+than 40 entries, and demanding a migration for every churn in weeks 1-4 costs work for
+nobody; schema changes are applied by re-running the generator.
 
 ### Status tracking (deliverable 4, resolves premise 3)
 
@@ -366,12 +440,11 @@ processes:
     rationale: "No mobile surface."   # REQUIRED for not-relevant and waived
 ```
 
-`rationale` being required on `not-relevant` and `waived` is what keeps the checklist honest
-instead of a way to mark everything N/A. The `id_map` in `catalog.json` lets a consumer
-migrate this file across splits and merges mechanically.
+`rationale` being required on `not-relevant` and `waived` keeps the checklist honest instead
+of a way to mark everything N/A. `id_map` lets a consumer migrate this file across splits and
+merges mechanically.
 
-The interactive tracker page (load a status file, tick boxes, download it back, DSOMM-style)
-is the one deferrable piece of B. The schema is what deliverable 4 actually asks for
+The interactive tracker page is deferred; the schema is what deliverable 4 asks for
 ("suitable for future collaboration features"), and the schema costs an afternoon.
 
 ### AI generation (deliverable 6)
@@ -379,35 +452,61 @@ is the one deferrable piece of B. The schema is what deliverable 4 actually asks
 Two skills, deliberately split, because "what should exist" and "write it well" are different
 jobs and merging them is what makes 400 entries unreviewable.
 
-**`catalog-expand` (breadth).** Given a category, propose every process that belongs, at
-maximum scope. Writes candidates to `catalog/_meta/backlog/<category>.yaml` (one file per
-category; a single 400-item backlog is unreviewable and merge-conflicts on every parallel
-run) with `proposed_title`, `proposed_category`, `rationale`, `sources_hint`, `confidence`,
-`duplicate_of`. It writes no entries and allocates no IDs. The user marks each
-`approved | rejected | merged`; approval allocates the ID into the registry.
+**`catalog-expand` (breadth).** Given a category, proposes every process that belongs, at
+maximum scope, into `catalog/_meta/backlog/<category>.yaml`. One file per category: a single
+400-item backlog is unreviewable in one pass and merge-conflicts on every parallel run. It
+writes no entries and allocates no IDs.
 
-**`catalog-write` (depth).** Takes approved backlog items, researches real sources, writes
-entries against the schema and the heading tiers, runs `scripts/validate.mjs`, and opens a PR
-at `status: review`. The user flips `status: published` and sets `reviewed_by`.
+Backlog item fields (`schema/backlog.schema.json`):
 
-**Both skills take `dist/index-compact.json` as a required input** (id, slug, title, summary,
-tags — `catalog.json` minus bodies, a few hundred KB). Neither can hold the catalog in
-context, so `duplicate_of` is otherwise an assertion rather than a capability. "Check the
+| Field | Req | Notes |
+|---|---|---|
+| `proposed_title` | yes | |
+| `proposed_category` | yes | foreign key |
+| `rationale` | yes | why this is a distinct process |
+| `sources_hint` | yes | ≥1 candidate URL, unverified at this stage |
+| `confidence` | yes | `low\|medium\|high` |
+| `duplicate_of` | no | id or backlog key |
+| `state` | yes | `proposed\|approved\|rejected\|merged\|needs-evidence` |
+| `id` | no | written by `approve-backlog.mjs` at approval; absent before |
+
+**`approve-backlog.mjs` is the only allocator.** It consumes items the user marked
+`approved`, allocates the next IDs, appends registry rows, and writes `id` back onto the
+items atomically. A human never hand-computes an ID, which is the mistake the registry exists
+to prevent and which CI would otherwise bounce.
+
+**`catalog-write` (depth).** Takes approved items with IDs, researches real sources, writes
+entries against the schema and heading rules, runs `validate.mjs`, and opens a PR at
+`status: review`.
+
+**Both skills take `site/public/index-compact.json` as a required input** (id, slug, title,
+summary, tags — `catalog.json` minus bodies, a few hundred KB). Neither can hold the catalog
+in context, so `duplicate_of` is otherwise an assertion rather than a capability. "Check the
 index first" is a hard step, not advice.
 
 **Hard rule in `catalog-write`, non-negotiable (premise 4):** every `sources[]` entry must be
 a URL the skill actually fetched in that session. If no real source supports a practice, the
 item returns to the backlog as `needs-evidence` rather than shipping.
 
-**The `reviewed_by` field proves nothing on its own** — the AI writing the entry can set it
-to any string. The real gate is CI: any diff flipping `status:` to `published` requires an
-approving review from a CODEOWNER, and `reviewed_by` must equal the approving GitHub login.
+**`catalog-write` runs under a separate bot identity** (GitHub App installation token or a
+dedicated account). GitHub forbids approving your own PR, so if the skill opened PRs under
+the maintainer's token, the CODEOWNER approval gate could never be satisfied and the human
+review guarantee would be self-signed.
 
-**Review throughput is the actual schedule.** At the stated 10 minutes per entry, 400 entries
-is roughly 67 hours of one named reviewer. That is the project's real critical path and it
-belongs in the plan, not in a footnote. Mitigation: after the 20-entry calibration set,
-`catalog-write` batches 5-10 entries per PR within one subcategory, and review shifts from
-line-reading every entry to spot-auditing N per batch plus the `audit-sample.mjs` drift check.
+**Review throughput is the real critical path, and it is bigger than it first looks.** The
+10-minutes-per-entry figure is a *success criterion*, not a measurement, so using it as the
+schedule input is circular. Verifying three source URLs alone takes minutes before reading a
+word of nine sections. A defensible band is 15-25 minutes, i.e. **100-165 hours** for 400
+entries. Re-derive it from the 20-entry calibration set (Next Step 6) before planning around
+any number.
+
+**Sampling is disclosed, not hidden.** After the calibration set, `catalog-write` batches 5-10
+entries per PR within one subcategory and review shifts to spot-auditing. That reduces
+coverage, not cost, so `reviewed_by` alone would assert human review of entries no human
+read — recreating the slop failure in the review metadata that premise 4 exists to prevent.
+Hence `review_depth: full | sampled` on every published entry, and a plain statement in the
+README and `CONTRIBUTING.md` that post-calibration entries are sample-audited. Honest and
+still credible; silently sampled is neither.
 
 ### Contribution policy (deliverable 5)
 
@@ -415,113 +514,118 @@ Named `CONTRIBUTING.md`, not `collaboration.md`: GitHub surfaces `CONTRIBUTING.m
 automatically in the PR composer and the repo sidebar, and a non-standard filename loses that
 for nothing.
 
-It must state:
-
 - **What a human PR is for:** corrections, real-world evidence, tool references, processes
   the generator missed. Not bulk new entries.
 - **Two paths by cost:** propose a process via the structured issue form (cheap, feeds the
   backlog) versus write or fix an entry via PR.
-- **AI-authorship disclosure:** this catalog is machine-generated and human-reviewed, every
-  entry declares `generated_by`, here is why, and here is how to challenge an entry.
+- **AI-authorship and sampling disclosure:** machine-generated, human-reviewed, every entry
+  declares `generated_by` and `review_depth`; here is how to challenge an entry.
 - **The schema contract:** CI rejects PRs that break it; run `npm run validate` locally.
 - **ID rules:** never invent one, never change one, never reuse one.
 - **Translations are out of scope for v1** and will be closed with a pointer to this line.
   Accepting them today would break `slug` uniqueness by construction.
-- CODEOWNERS plus branch protection so AI-authored PRs still require human approval.
+- CODEOWNERS plus branch protection, with "require branches to be up to date" enabled.
 
 ### Beyond the brief (deliverable 7)
 
-- **Ship `llms.txt` and `catalog.json`.** The second audience is agents. Cheap, and it makes
-  the catalog useful in a way no awesome-list is.
+- **Ship `llms.txt` and `catalog.json`.** The second audience is agents.
 - **Split the license, per path.** MIT for `scripts/`, `site/`, `schema/`, `.claude/skills/`;
-  CC BY 4.0 for `catalog/**` including `_meta/*.yaml`. `LICENSE-CONTENT` carries the explicit
-  table. A one-line summary leaves the majority of the tree unassigned, and re-licensing after
-  contributors have signed on to the wrong terms is genuinely painful.
-- **Seed depth before breadth.** Take three categories to full depth (~40 entries) before
-  going public. Depth in a few categories reads as serious; broad-and-shallow reads as
-  abandoned.
+  CC BY 4.0 for `catalog/**` including `_meta/*.yaml`. `LICENSE-CONTENT` carries the table.
+  Re-licensing after contributors have signed on to the wrong terms is genuinely painful.
+- **Seed depth before breadth.** Three categories to full depth (~40 entries) before
+  announcing. Depth reads as serious; broad-and-shallow reads as abandoned.
 - **State anti-goals in the README.** Not a maturity certification, not a compliance
-  framework, not a tool directory. This is what stops contributors pulling the project in
-  three directions.
+  framework, not a tool directory.
 - **Count badge counts `status: published` only.** A "400+" target plus a count badge plus an
   unresolved inclusion rule is a structural incentive to pad the taxonomy, which is the exact
-  failure that turns catalogs into link dumps. Hence `inclusion-rule.md`, written before the
-  full expand run.
+  failure that turns catalogs into link dumps. Hence `inclusion-rule.md`, written first.
 
 ### Deferred and out of scope
 
 | Item | Why |
 |---|---|
 | Interactive tracker page | Schema is what deliverable 4 needs; the UI can follow |
-| `sdlc-check` CLI, npm/PyPI, badge (approach C) | Layer over `catalog.json`; wait for depth |
+| `sdlc-check` CLI, npm/PyPI, consumer CI badge (approach C) | Layer over `catalog.json`; wait for depth. Distinct from the in-scope README count badge |
 | Internationalization | Needs `lang` in identity and `/{lang}/p/{slug}`; breaks flat unique `slug` |
 | `catalog.yaml` alongside JSON | No named consumer; a second surface to keep in sync |
 | `_meta/glossary.md` | Unspecified and unowned; terminology folds into the README |
+| `scripts/migrations/` enforcement | Required only after the first tagged release |
 
 ## Open Questions
 
-1. **Does the two-tier heading split survive an unusual process?** The `N/A — <reason>`
-   convention should cover it, but only a hand-written entry proves that.
+1. **Does the waiver convention survive an unusual process?** Only a hand-written entry
+   proves it.
 2. **Where does the category tree stop?** Is "hiring and onboarding engineers" an SDLC
-   process? `inclusion-rule.md` must answer this before the full `catalog-expand` run, since
-   Next Step 3 depends on it.
+   process? `inclusion-rule.md` must answer before the full `catalog-expand` run.
 3. **Starlight or Material for MkDocs?** Recommending Starlight. Reversible, low stakes.
-4. **How many entries before public?** ~40 across three categories is a recommendation, not a
-   validated number.
-5. **Is 67 hours of review acceptable, or does the batching mitigation need to go further?**
-   Genuinely open, and it depends on how good the calibration set turns out to be.
+4. **How many entries before announcing?** ~40 across three categories is a recommendation,
+   not a validated number.
+5. **Is 100-165 hours of review acceptable?** The batching plus sampling mitigation is
+   honest but reduces coverage. Whether that trade is right depends on the calibration set.
+6. **Does Pagefind's filtering cover the six facets**, or does `/browse` need hand-building?
 
 ## Success Criteria
 
-- 400+ published processes, each schema-valid with at least one `standard|book|paper` source.
-- Adding a process is one skill invocation plus one human review, under 10 minutes.
-- CI rejects any PR that breaks the frontmatter contract, reuses an ID, or mutates a registry
-  row.
-- Re-categorizing a process changes no URL and no user's status file. **Test this
-  deliberately, including a cross-folder file move, before the first 50 entries.**
+- 400+ published processes, each schema-valid with a qualifying source under rule 1.
+- Adding a process is one skill invocation plus one human review; measure the real minutes
+  from the calibration set rather than assuming 10.
+- CI rejects: a broken frontmatter contract, a reused or swapped ID, a mutated registry row,
+  a slug change, an entry whose `(id, slug)` disagrees with its registry row.
+- Re-categorizing a process changes no URL and no status file. **Test deliberately, including
+  a cross-folder file move, before the first 50 entries.**
 - A split (1→2) and a merge (2→1) can both be applied and a stale status file migrated from
-  `catalog.json`'s `id_map` without hand-editing.
-- `catalog.json` is consumable by a third party without reading the repo.
+  `id_map` without hand-editing.
+- `catalog.json` validates against `catalog.schema.json` and is consumable without reading
+  the repo.
 - A stranger can tell within 30 seconds what the project is and is not.
 
 ## Distribution Plan
 
-- **Site:** GitHub Actions builds Starlight, deploys to Pages on push to `main`. $0.
-- **Data:** `catalog.json` on Pages every main build (`+dev.<sha>`); attached to the GitHub
-  Release on a version tag. Date-based versioning (`2026.08.1`).
-- **PR gate:** schema, headings, registry integrity, foreign keys, `related` symmetry,
-  internal links. External links nightly.
-- **Later (approach C):** npm/PyPI package plus `sdlc-check` CLI and README badge.
+- **Site:** GitHub Actions builds Starlight, deploys to Pages on push to `main`. Public repo
+  from day one, so Pages is free and live immediately behind a WIP notice.
+- **Data:** `catalog.json` on Pages every main build (`+dev.<sha>`); attached to the Release
+  on a version tag.
+- **Gates:** `validate.yml` per PR; `review-gate.yml` on review submission; external links
+  nightly.
+- **Launch (Next Step 10), because premise 6 says distribution is the risk:** PRs adding the
+  catalog to the two awesome-lists named in the Problem Statement, a Show HN and an r/devops
+  post timed to the seed set, and submission to `llms.txt` directories.
+- **Later (approach C):** npm/PyPI package plus `sdlc-check` CLI and consumer badge.
 
 ## Next Steps
 
-1. **Write `inclusion-rule.md` and `rubrics.md` first.** Both are inputs to generation, and
-   both are cheap now and expensive to retrofit across 400 entries.
-2. **Scaffold the contract before generating anything.** `schema/process.schema.json`,
-   `id-registry.yaml`, `tags.yaml`, `scripts/validate.mjs`, one hand-written exemplar entry,
-   `CONTRIBUTING.md`, `validate.yml`. Prove the contract against one real entry.
-3. **Prove the identity model.** Move the exemplar between two category folders and confirm
-   its URL and a sample status file are both unchanged. This is the premise the whole design
-   rests on; verify it at entry 1, not entry 200.
-4. **Write `catalog-expand`, test on Monitoring only.** Review the backlog by hand and judge
-   quality before trusting it on the full tree.
-5. **Run `catalog-expand` across the tree, review the backlog.** Main human time investment;
-   it determines the ceiling on catalog quality.
-6. **Write `catalog-write`, run it on approved Monitoring items.** Read the first 20 closely;
-   that is the calibration set. Switch to batched PRs afterwards.
-7. **Stand up Starlight and `publish.yml`.** Budget a full day for the loader work, not an
-   hour. Deploy to Pages while still private.
-8. **Take three categories to full depth, then flip public.**
-9. **Tag a release with `catalog.json`.** Then decide on the CLI.
+1. **Write `inclusion-rule.md` and `rubrics.md` first.** Both are generation inputs, cheap
+   now and expensive to retrofit across 400 entries.
+2. **Scaffold the contract before generating anything.** `process.schema.json`,
+   `id-registry.yaml`, `tags.yaml`, `validate.mjs`, `approve-backlog.mjs`, one hand-written
+   exemplar, `CONTRIBUTING.md`, `validate.yml`.
+3. **Prove the identity model.** Move the exemplar between two category folders; confirm its
+   URL and a sample status file are both unchanged. Verify at entry 1, not entry 200.
+4. **Set up the bot identity and branch protection**, including "require branches up to
+   date," before any generated PR exists.
+5. **Write `catalog-expand`, test on Monitoring only.** Review the backlog by hand.
+6. **Run `catalog-expand` across the tree, review the backlog.** Main human time investment.
+7. **Write `catalog-write`, run on approved Monitoring items.** Read the first 20 closely;
+   that is the calibration set. Re-derive the per-entry review minutes from it. Switch to
+   batched PRs with `review_depth: sampled` afterwards.
+8. **Stand up Starlight and `publish.yml`.** Budget a full day for the loader and custom
+   route, not an hour.
+9. **Three categories to full depth.** Drop the WIP notice.
+10. **Launch.** Awesome-list PRs, Show HN, r/devops, `llms.txt` directories.
 
 ## The Assignment
 
 **Hand-write the `weak-signal-monitoring` entry yourself, before any AI writes one.**
 
 Not a random entry: the most unusual item on your own list, the one no existing catalog has.
-Fill every required-always section from your own experience, and make an honest call on the
-three conditional ones. If you cannot fill them, the template is wrong, and you will learn
-that at a cost of one entry instead of 400. It is the highest-leverage hour in this project.
+Fill every never-waivable section from your own experience, and make an honest call on the
+three waivable ones. If you cannot fill them, the template is wrong, and you will learn that
+at a cost of one entry instead of 400. It is the highest-leverage hour in this project.
+
+Watch for two things while you write it: whether `generated_by: human:jelnur` feels right as
+a provenance value, and whether you can find a `standard|book|paper` source at all. If you
+cannot, you have just proved conditional rule 1's escape valve is necessary rather than
+theoretical.
 
 **Second, and separately:** post the category tree alone, no entries, as a GitHub Discussion
 or to r/devops, and ask what is missing. Free taxonomy review from exactly the people who
@@ -529,34 +633,27 @@ would use this, before you spend generation cycles on the wrong tree.
 
 ## Review History
 
-Revision 2 applied 29 issues from an independent adversarial review (7/10 on the first pass).
-The three that changed the architecture rather than the prose:
+Two rounds of independent adversarial review, 7/10 both times, 29 then 21 issues. Round 2
+found defects in round 1's own fixes, which is the point of a second pass.
 
-- **Starlight reserves `slug` as frontmatter**, so the original design would have silently
-  produced `/error-monitoring` instead of `/p/error-monitoring` across all entries. Resolved
-  in the loader via `generateId`.
-- **The ID immutability check failed on cross-folder moves**, the exact case the identity
-  model exists to enable. Replaced with a registry-set comparison keyed on `id`, not path.
-- **A schema enforces enum membership, not consistent judgment.** The claim that a schema
-  alone keeps 400 entries uniform was wrong; uniformity now rests on shape (schema) plus
-  judgment (rubrics) plus drift detection (sample audit).
+**Round 1 changed the architecture in three places.** Starlight reserves `slug` as
+frontmatter, so the original design would have silently served `/error-monitoring` instead of
+`/p/error-monitoring`. The ID-immutability check failed on cross-folder moves, the exact case
+the identity model exists to enable. And a schema enforces enum membership, not consistent
+judgment, so the claim that a schema alone keeps 400 entries uniform was wrong.
 
-Also added and previously missing: the append-only ID registry (without which "never reused"
-is unenforceable after any deletion), array-valued `superseded_by` with an `id_map` for
-split/merge migration, and the ~67-hour review-throughput reality.
+**Round 2 found four defects in those fixes.** The entry glob `**/[^_]*.md` does not exclude
+`_meta/`, so `rubrics.md` would have loaded as an entry and broken the build. The registry
+check compared registry-to-registry only and never bound entry files to rows, so swapping two
+entries' `id:` values passed CI while corrupting every status file. The CODEOWNER gate could
+not fire, because `pull_request` does not re-run on review submission and GitHub forbids
+self-approval — fixed with `review-gate.yml` and a bot identity. And batched review would
+have stamped `reviewed_by` on entries nobody read, recreating the slop failure in the review
+metadata, fixed with `review_depth`.
 
-## What I noticed about how you think
+Also corrected: GitHub Pages on a private repo is a paid feature, so "build privately, publish
+later" broke the $0 constraint. `prerequisite` is directional and mirrors to `enables`, not to
+itself. Rule 1 needed an escape valve or the long tail strands at `status: review` forever.
 
-- You wrote "weak signal monitoring" in a list next to "error monitoring" and "logs
-  monitoring." The other five are what anyone would list. That one is not. It is the term of
-  someone who has been through an outage that had a quiet precursor nobody was watching.
-- Point 4 says the structure should be "suitable for future collaboration features," not
-  "build collaboration features." You separated structural readiness from scope on your own.
-  Most people write that as a feature request and then build it in v1.
-- Point 6 asks for two separate things, "brainstorming of categories to the fullest scope"
-  and "generate them one-by-one," before I had said a word about breadth versus depth. You
-  had already found the split that makes 400 entries reviewable.
-- You interrupted my multiple-choice question and typed the actual idea instead. What you
-  wrote was more useful than any option I had put on the list.
-- You asked for the PR before approving the doc. That is the instinct of someone who reads
-  the diff rather than the summary, and it is why the review pass caught what it caught.
+Session-level commentary from the office-hours conversation is kept out of this file and
+lives with the session copy in `~/.gstack/projects/`.
