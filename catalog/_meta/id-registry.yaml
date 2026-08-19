@@ -1,0 +1,13 @@
+# Append-only. One row per ID ever issued.
+#
+# Rules (from the design doc, enforced by scripts/validate.mjs once written):
+#   - id, slug, first_seen are IMMUTABLE once written.
+#   - state transitions active -> deprecated only, never back.
+#   - IDs are unique and strictly increasing. Never reused, even after a file is deleted.
+#   - Normally written ONLY by scripts/approve-backlog.mjs. SDLC-0001 is a hand-bootstrapped
+#     exception because it predates the allocator.
+entries:
+  - id: SDLC-0001
+    slug: weak-signal-monitoring
+    first_seen: 2026-08-20
+    state: active
