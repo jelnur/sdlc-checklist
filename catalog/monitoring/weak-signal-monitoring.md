@@ -6,7 +6,7 @@ summary: Detecting the quiet precursors of failure, such as saturation trends an
 category: monitoring
 subcategory: observability-signals
 lifecycle_phase: [operate]
-adoption_level: 4
+adoption_level: 3
 effort: high
 automatable: partial
 applies_to: [backend, infra, data]
@@ -22,7 +22,7 @@ sources:
     url: https://books.google.com/books/about/Managing_the_Unexpected.html?id=GU55MJOp1OcC
     type: book
 status: draft
-generated_by: human:jelnur
+generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose
@@ -47,28 +47,53 @@ telemetry and still miss every precursor.
 
 ## What Good Looks Like
 
-> **YOURS TO WRITE.** Describe the observable end state, not the aspiration. Concretely: when
-> a precursor appears, what happens, who sees it, and on what timescale? The distinguishing
-> question for this section is what a team that does this well can *say* that a team with
-> ordinary monitoring cannot. Avoid "the team is proactive"; that is a feeling, not an
-> observable.
+Observable properties, each checkable by asking rather than by inspecting a dashboard:
+
+- Someone on the team can answer **"what is degrading right now that is not yet broken?"**
+  from memory. Needing to go and look means the answer is not being tracked, only recorded.
+- Every finite resource has a **projected exhaustion date with a horizon longer than the lead
+  time to add capacity**. A four-hour disk forecast is useless if provisioning takes a week.
+- The weak-signal queue has **one named owner**, a grooming cadence, and items that close with
+  a recorded decision: fixed, accepted with a rationale and a review date, or noise with the
+  threshold changed. Items do not age out silently.
+- Postmortems answer **"was this visible beforehand, and where?"** and the answer is usually
+  no. A team early in the practice will find the answer is usually yes; that gap closing over
+  time is the signal the practice is working.
+- **Raised thresholds carry a reason and a review date.** A threshold quietly loosened is
+  indistinguishable from a precursor ignored.
+- Near-misses are written up with the same rigour as outages, because a failure the system
+  recovered from by luck is a free lesson about fragility.
 
 ## Best Practices
 
-> **YOURS TO WRITE — this is the section the whole entry exists for.**
->
-> You put "weak signal monitoring" on your original list next to five signals anyone would
-> name. Start from why. Recall one outage that had a quiet precursor nobody was watching:
->
-> 1. What was the precursor, specifically? A metric, a log line, a support ticket, a
->    complaint, a graph nobody was looking at?
-> 2. How long was it visible before the incident? Hours, weeks, a quarter?
-> 3. What would have had to be true for someone to notice it in time? Not "better
->    monitoring" — the actual missing thing. A named owner? A review ritual? A different
->    aggregation? Permission to escalate on a hunch?
->
-> Answer 3 and you have written this section. Each bullet should be independently
-> actionable by a team that has not had your outage.
+- **Route weak signals to a queue, never to a pager.** A precursor is by definition not yet
+  urgent. Paging on it produces the fatigue the SRE book describes, where people "second-guess,
+  skim, or even ignore incoming alerts." Give it a ticket, an owner, and a business-hours SLA.
+- **Alert on the derivative, not the level.** Replace "disk above 85%" with "projected to
+  exhaust within N days," where N exceeds your lead time to act. The threshold tells you it is
+  too late; the trend tells you while you can still do something.
+- **Watch high percentiles, not means.** p99 latency degrades while the average sits flat.
+  Aggregations that average across a fleet hide the one instance that will fail first.
+- **Add a slow-burn tier to SLO alerting.** Alongside fast-burn pages, run the Workbook's 1x
+  burn rate over three days as a *ticket*. It catches sustained low-level degradation that
+  "can exhaust your error budget if left unchecked," and the ticket routing is the point, not
+  a compromise.
+- **Require every weak-signal item to close with a recorded decision.** Fixed, accepted, or
+  reclassified as noise. Acceptance must carry a rationale and a review date. This single rule
+  is the mechanism that prevents normalization of deviance, because it makes "we have decided
+  to live with this" a dated artifact rather than a slow forgetting.
+- **Make raising a hunch cheap.** Anyone can open a weak-signal ticket without justifying it
+  first, and doing so is never penalised when it turns out to be nothing. Weick and Sutcliffe's
+  finding is that weak signals fail on the social path, not the detection path: the conditions
+  that stop a signal being shared or escalated are what let disasters incubate.
+- **Add "was this visible beforehand?" as a mandatory postmortem field.** Answering it
+  systematically converts every incident into calibration for your thresholds, and produces the
+  precursor-present rate you need to know whether any of this is working.
+- **Retain data long enough to see the drift you care about.** Detecting a quarter-long trend
+  requires a quarter of history at usable resolution. This is usually a retention-cost decision
+  masquerading as a tooling limitation.
+- **Give each precursor class a named owner, not a team.** A signal owned by everyone is
+  triaged by no one.
 
 ## Automation
 
@@ -78,11 +103,8 @@ not.
 **What automates.** Multiwindow, multi-burn-rate alerting is the mechanized form of weak
 signal detection. The SRE Workbook's recommended starting point for a 99.9% SLO pairs
 fast-burn pages (14.4x burn over 1 hour, 6x over 6 hours) with a **slow-burn ticket at 1x
-burn rate over 3 days**, which catches sustained low-level degradation that "can exhaust your
-error budget if left unchecked." The slow-burn row is the weak signal: it deliberately
-generates a ticket rather than a page, so it can be worked in business hours. Pairing each
-long window with a short verification window of about 1/12 its duration suppresses alerts for
-problems that have already stopped.
+burn rate over 3 days**. Pairing each long window with a short verification window of about
+1/12 its duration suppresses alerts for problems that have already stopped.
 
 Beyond burn rate: trend-based capacity projection (extrapolate to exhaustion rather than
 alerting on a static threshold), anomaly detection on high percentiles instead of means, and
@@ -106,23 +128,27 @@ recreates the problem one level up.
 - **Saturation projection horizon.** How far ahead exhaustion is forecast for each
   finite resource, measured against the resource that will run out first rather than fleet
   averages.
+- **Accepted-risk age.** How long items sit in "accepted with rationale" past their review
+  date. A growing number here is normalization of deviance with a paper trail.
 
 ## Anti-Patterns
 
 - **Normalization of deviance.** The precursor is seen repeatedly, nothing bad happens yet,
   and the abnormal reading becomes the accepted baseline. This is the dominant failure mode
   and it is social, not technical.
-- **Paging on weak signals.** A precursor is by definition not yet urgent. Routing it to a
-  pager produces exactly the fatigue the SRE book warns of, where "employees second-guess,
-  skim, or even ignore incoming alerts, sometimes even ignoring a 'real' page that's masked
-  by the noise." Weak signals belong in a queue with an owner, not on a pager.
+- **Threshold ratcheting.** Each time an alert fires, the threshold is raised instead of the
+  cause investigated. Mechanically indistinguishable from tuning out noise, and the most
+  common way normalization of deviance actually happens in practice.
+- **Paging on weak signals.** Covered above; the result is that real pages get skimmed.
+- **Acknowledgement as resolution.** The alert is acked, nobody is assigned, and the ack is
+  the last event in its history.
 - **Averages hiding the signal.** Mean latency is stable while p99 has been degrading for
   weeks.
 - **Dashboards with no reader.** A precursor visible on a dashboard nobody opens on a
   schedule was never monitored, only recorded.
-
-> **YOURS TO ADD.** The above are from the literature. Add the ones you have personally
-> watched happen — those are the ones that will make an engineer recognize their own team.
+- **Cross-team precursors dying in handoff.** The signal is detected by the team that sees it
+  and the fix belongs to a team that does not, so it becomes a backlog item with no owner on
+  either side.
 
 ## Tooling
 
@@ -141,14 +167,22 @@ data at usable resolution, which is a cost decision more than a tooling one.
 
 ## Getting Started
 
-> **YOURS TO WRITE.** Exactly three steps for a team at adoption level 1, in order. The
-> constraint that makes this section hard and worth writing: each step must be completable in
-> under a day by a team that has no SLOs yet, and step 1 must produce value even if steps 2
-> and 3 never happen.
->
-> If you cannot make step 1 standalone-valuable, that is a real finding about
-> `adoption_level: 4` — it would mean this practice genuinely cannot be entered at level 1,
-> and the field is right.
+Three steps for a team with no SLOs and no new tooling. Step 1 pays for itself even if steps
+2 and 3 never happen.
+
+1. **Audit your last five incidents for precursors (half a day, no tooling).** For each one,
+   ask: was there a signal visible beforehand in data we already had? Write down the answer,
+   the signal, and how long it was visible. You now know your precursor-present rate and,
+   more usefully, which two or three signals actually precede failure in *your* system. This
+   is the whole practice in miniature and it requires nothing but a meeting and your existing
+   dashboards.
+2. **Instrument the single most common precursor from step 1 (one day).** One signal, one
+   trend-based alert with a horizon longer than your fix lead time, routed to a ticket queue
+   with one named owner. Not a pager. Resist doing all three signals; one that closes its
+   loop beats three that nobody owns.
+3. **Add one mandatory postmortem question (one hour).** "Was this visible beforehand, and
+   where?" This makes step 1 self-sustaining instead of a one-off audit, and every future
+   incident now calibrates your thresholds for free.
 
 ## References
 
