@@ -5,7 +5,7 @@ Branch: main
 Repo: jelnur/sdlc-checklist
 Status: APPROVED
 Mode: Builder
-Revision: 3 (two rounds of adversarial spec review applied)
+Revision: 4 (three rounds of adversarial spec review applied; see Reviewer Concerns)
 
 ## Deliverable coverage
 
@@ -239,15 +239,19 @@ sdlc-checklist/
 `npm run build` = `build-catalog → build-index → build-llms → astro build`. All three outputs
 are gitignored so no working tree goes dirty and no committed copy goes stale.
 
-**Entry glob, stated once so the loader and the validator use the identical pattern:**
+**Entry glob, stated once with its base so the loader and the validator use the identical
+pattern:**
 
 ```js
-['**/[^_]*.md', '!**/_*/**']
+{ base: '<repo>/catalog', pattern: ['**/[^_]*.md', '!**/_*/**'] }
 ```
 
-The second term is required. `**/[^_]*.md` alone does **not** exclude `_meta/`: in picomatch
-`**/` matches the `_meta` directory freely and `[^_]*` constrains only the filename, so
-`_meta/rubrics.md` would load as a catalog entry and fail schema validation at build time.
+Both terms are load-bearing. Term 1 excludes `_category.md` (underscore in the filename) but
+does **not** exclude `_meta/`: in picomatch `**/` matches the `_meta` directory freely and
+`[^_]*` constrains only the filename, so `_meta/rubrics.md` would load as a catalog entry and
+fail schema validation at build time. Term 2 excludes any path segment beginning with `_` at
+any depth, which covers `_meta/` and `_meta/backlog/`. The `base` belongs in the same block:
+rooted at the repo instead of `catalog/`, term 1 would sweep `README.md` and `docs/**`.
 
 ### Entry contract (deliverable 2)
 
@@ -277,18 +281,30 @@ lives in the body. `additionalProperties: false`.
 | `supersede_reason` | no | `renamed\|split\|merged\|obsolete` | |
 | `generated_by` | yes | `^(human:[a-zA-Z0-9-]+\|catalog-write@\d+\.\d+\.\d+)$` | provenance; hand-written entries use `human:<login>` |
 | `reviewed_by` | no | GitHub login | approver of record |
-| `review_depth` | no | `full\|sampled` | see the review-honesty rule below |
+| `review_depth` | no | `full\|sampled-audited\|sampled-unread` | see the review-honesty rule below |
+| `review_batch` | no | int | PR number; required when `review_depth` starts with `sampled` |
 | `last_reviewed` | no | `format: date` | |
 
-Conditional rules 1 and 2 are `if/then` in JSON Schema. Rule 3 is a cross-file foreign key
-that only `validate.mjs` can enforce.
+Rules 1 and 2 are `if/then` in JSON Schema (dialect pinned to 2020-12, which `minContains`
+and `if/then` both need). Rule 3 and the parts of rule 1 marked below are cross-file or
+cross-field checks that only `validate.mjs` can enforce.
 
 1. `status: published` requires `reviewed_by`, `review_depth`, `last_reviewed`, **and** at
    least one `sources[]` entry of type `standard`, `book`, or `paper`. `practice-report` and
-   `vendor-doc` are supplementary. **Escape valve:** two independent `practice-report`
-   sources from unaffiliated authors also qualify, and then `source_exception` must state
-   why no standard exists. Without the valve, exactly the long-tail entries this catalog
-   exists for (`weak-signal-monitoring` among them) strand at `status: review` forever.
+   `vendor-doc` are supplementary. **Escape valve:** two `practice-report` sources also
+   qualify. Without it, exactly the long-tail entries this catalog exists for
+   (`weak-signal-monitoring` among them) strand at `status: review` forever.
+   - `source_exception` is **required** iff no `sources[]` entry is `standard|book|paper`,
+     and **forbidden** otherwise. ("Required iff the valve is used" was not expressible.)
+   - *(validate.mjs)* The two `practice-report` sources must sit on distinct registrable
+     domains (eTLD+1), and neither may share a domain with a `vendor-doc` in the same entry.
+     "Unaffiliated authors" has no machine test; distinct registrable domains is the
+     implementable proxy.
+   - *(validate.mjs)* A valve entry requires `review_depth: full`. The entry that could not
+     find a standard is precisely the one a human must read, and saying so costs nothing.
+   - *(validate.mjs)* Valve usage is reported as a percentage of published entries and fails
+     above a stated ceiling. `type` is self-assigned by the generator, so under batched
+     generation the valve is otherwise the cheaper path and will silently become the norm.
 2. `status: deprecated` requires `superseded_by` and `supersede_reason`.
 3. Every `related[].id` and `superseded_by[]` id must exist in `id-registry.yaml`. It need
    **not** be written yet, so forward references to approved-but-unwritten entries are legal.
@@ -296,10 +312,25 @@ that only `validate.mjs` can enforce.
 **`adoption_level`, not `maturity`.** The earlier name meant two different things in one
 field: how mature the practice is, and the org tier at which a team adopts it.
 
-**`related` edge direction.** `same-concern`, `complements`, `contrasts` are symmetric;
-`backfill-related.mjs` mirrors them unchanged and CI asserts symmetry. `prerequisite` is
-**not** symmetric: `A --prerequisite--> B` mirrors to `B --enables--> A`. Asserting plain
-symmetry on a directional edge would invert meaning across 400 entries.
+**`related` edge direction, stated so `catalog-write` cannot guess.** `{id: X, rel:
+prerequisite}` on entry E asserts *X must be in place before E*; its mirror on X is `{id: E,
+rel: enables}`. `same-concern`, `complements` and `contrasts` are symmetric and mirror
+unchanged. Asserting plain symmetry on a directional edge would invert its meaning across 400
+entries. The same sentence goes in `rubrics.md`.
+
+**Symmetry is asserted only between written entries.** Conditional rule 3 permits forward
+references to approved-but-unwritten IDs, which have no file to carry a mirror, so a naive
+symmetry check would fail a legal PR. Two rules together:
+
+- CI asserts symmetry only where **both** endpoints are written entries.
+- When an entry is first written, `validate.mjs` scans all existing entries for inbound edges
+  pointing at its `id` and requires the mirror in that same PR; `backfill-related.mjs` adds
+  it. Without this second half the mirror is silently never created once the target lands,
+  and the graph degrades exactly the way the backfill script exists to prevent.
+
+`uniqueItems` on an array of `{id, rel}` objects compares whole objects, so `{B,
+prerequisite}` and `{B, contrasts}` would both pass. `validate.mjs` enforces uniqueness on
+`id` within `related`.
 
 **Body sections.** Nine headings are always present; three of them may carry an explicit N/A.
 The tiering is about which ones may be waived, not about which appear, because a governance
@@ -341,12 +372,18 @@ and its three bullets contradicted each other. The decision:
   `getStaticPaths`. If Starlight's built-in `[...slug]` route renders the collection, we do
   not own `getStaticPaths` and **cannot exclude `draft`/`review` entries** — they would all
   publish. That alone decides it.
-- Naming the collection `processes` means Starlight injects no route of its own, so there is
-  no collision and no duplicate `/{slug}` page for all 400 entries.
+- Naming the collection `processes` keeps entries out of Starlight's own route. Starlight
+  injects its routes **unconditionally**; what protects us is that pages in `src/pages/` take
+  priority over injected routes, and an empty `docs` collection yields nothing from the
+  injected route's `getStaticPaths`. So no duplicate `/{slug}` page is emitted for 400
+  entries. Keep a minimal `docs` collection anyway, holding `/` and `/browse`: Starlight's
+  routing internals resolve `getCollection('docs')`, and whether it boots with no `docs`
+  collection at all is unverified. See Reviewer Concerns.
 - Because we own `src/pages/p/[slug].astro` and render through `<StarlightPage>`, the
   `slug` frontmatter key **no longer collides** with Starlight's reserved `slug`, and the
-  `generateId` prefix trick from revision 2 becomes unnecessary. `summary` is passed
-  explicitly as the page's `description` prop rather than renamed by a schema transform.
+  `generateId` prefix trick from revision 2 becomes unnecessary. `summary` is passed as
+  `frontmatter={{ title, description }}` (there is no top-level `description` prop, and
+  `title` is required), and the table of contents needs `headings` from `render(entry)`.
 - `docsSchema({ extend })` is therefore not used. The loader declares its own Zod schema,
   generated from `process.schema.json` via `json-schema-to-zod` so the two cannot drift.
   Note that Zod **strips** unknown keys silently rather than rejecting them, so a field
@@ -367,11 +404,23 @@ Material for MkDocs remains a viable alternative; the content layer does not car
   linter, registry integrity (below), foreign keys into `categories.yaml` and `tags.yaml`,
   `related` symmetry with correct inversion, and **internal** link resolution across
   `catalog/**` and `docs/**`.
-- `review-gate.yml` on `pull_request_review: [submitted, dismissed]`: for any diff flipping
-  `status:` to `published`, query `gh api /repos/{o}/{r}/pulls/{n}/reviews` and require an
-  approving review from a CODEOWNER whose login equals `reviewed_by`. Registered as a
-  required status check. A `pull_request` event does not re-fire on review submission, which
-  is why this is a separate workflow.
+- `review-gate.yml` on **both** `pull_request` and `pull_request_review: [submitted,
+  dismissed]`, same job name, `fetch-depth: 0`: for any diff flipping `status:` to
+  `published`, query `gh api /repos/{o}/{r}/pulls/{n}/reviews` and require an approving
+  review from a CODEOWNER whose login equals `reviewed_by`. Exits success immediately when
+  the diff flips nothing to `published`. Registered as a required status check.
+  - **Both triggers are required.** `pull_request` alone never re-fires on review submission,
+    so the check could never observe the approval. `pull_request_review` alone never reports
+    on a PR that receives no review, and an unreported required check blocks merge
+    permanently — which would brick every scaffolding PR in Next Steps 1-4, before any entry
+    exists. Including `pull_request` also re-evaluates on `synchronize`, closing the
+    approve-then-push-a-status-flip path directly rather than relying on the head SHA moving.
+  - It also rejects `review_depth: full` on any PR flipping more than 2 entries to
+    `published`. The field is otherwise self-asserted, so the "asserts review that did not
+    happen" defect would simply re-enter through the other enum value. The gate already
+    computes that entry set, so the check is nearly free.
+  - Parsing `.github/CODEOWNERS` is trivial for `* @jelnur` and needs team expansion the day
+    a team is added.
 - `link-check.yml` nightly: `lychee --cache` with the cache restored via `actions/cache`,
   plus an allowlist for hosts that 403 bots. On failure it opens or updates a single tracking
   issue rather than turning a cron red, which gets ignored within two weeks. Checking 1,200+
@@ -397,6 +446,11 @@ status file now pointing at the wrong process. The full rule set:
    different file offsets auto-merge cleanly, so "allocation serializes through `main`" must
    be backed by this check plus branch protection's "require branches to be up to date."
 6. `registry[id].state === 'deprecated'` iff `entry.status === 'deprecated'`.
+7. The set of entry-file `id`s on `origin/main` is a subset of the set on head. Rule 4 alone
+   permits deleting a written entry (the row survives, no entry contradicts it, and rule 6 is
+   vacuous with no entry to inspect), which would leave "deprecate, never delete" as policy
+   with no enforcement and make a deleted process indistinguishable from an unwritten one.
+   Keyed on `id`, so moves and renames stay invisible to it.
 
 **`catalog.json` shape**, defined by `schema/catalog.schema.json`:
 
@@ -469,11 +523,30 @@ Backlog item fields (`schema/backlog.schema.json`):
 | `duplicate_of` | no | id or backlog key |
 | `state` | yes | `proposed\|approved\|rejected\|merged\|needs-evidence` |
 | `id` | no | written by `approve-backlog.mjs` at approval; absent before |
+| `slug` | no | written by `approve-backlog.mjs` at approval; absent before |
 
-**`approve-backlog.mjs` is the only allocator.** It consumes items the user marked
-`approved`, allocates the next IDs, appends registry rows, and writes `id` back onto the
-items atomically. A human never hand-computes an ID, which is the mistake the registry exists
-to prevent and which CI would otherwise bounce.
+**`approve-backlog.mjs` is the only allocator**, of both halves of the registry row. A human
+never hand-computes an ID, which is the mistake the registry exists to prevent and which CI
+would otherwise bounce. It:
+
+1. Selects items with `state: approved` **and no `id`**. The `id`-absence test is what makes
+   a re-run idempotent; "items the user marked approved" alone would double-allocate on a
+   second run, which is exactly the failure the registry exists to prevent.
+2. Allocates the next `id`, slugifies `proposed_title`, and checks that slug against every
+   slug in the registry for global uniqueness.
+3. Appends the `(id, slug, first_seen, state: active)` row and writes **both** `id` and
+   `slug` back onto the backlog item, in a single commit.
+
+**`slug` is allocated here, not at write time.** Rule 4 binds `registry[id].slug` to
+`entry.slug` and rule 2 forbids changing a row's slug afterwards, so a slug must exist the
+moment the row is appended. `catalog-write` therefore copies the allocated slug **verbatim**
+and may not re-derive it from a title it sharpened during research, which is the natural
+workflow and would break rule 2 on first commit.
+
+"In a single commit" rather than "atomically": two files cannot be written atomically on a
+filesystem. A crash between the registry append and the backlog write-back leaves an orphan
+row, which rule 4 permits (a row with no file is a legal unwritten entry) and a re-run works
+around, since step 1 skips items that already carry an `id`.
 
 **`catalog-write` (depth).** Takes approved items with IDs, researches real sources, writes
 entries against the schema and heading rules, runs `validate.mjs`, and opens a PR at
@@ -493,6 +566,15 @@ dedicated account). GitHub forbids approving your own PR, so if the skill opened
 the maintainer's token, the CODEOWNER approval gate could never be satisfied and the human
 review guarantee would be self-signed.
 
+**Human-authored entries go through the bot identity too.** The bot fixes bot→human approval
+but not the reverse, and this design mandates at least one human-authored entry (The
+Assignment). Written as-is, that entry could never reach `status: published`: it needs an
+approving CODEOWNER review whose login equals `reviewed_by`, and GitHub will not let the PR
+author approve. The rule: a human pushes the branch, the **App opens the PR**, and the human
+then reviews it normally. Admin bypass is not an acceptable substitute, because a gate that
+the only maintainer routinely overrides is theatre, and premise 4 is the reason the gate
+exists.
+
 **Review throughput is the real critical path, and it is bigger than it first looks.** The
 10-minutes-per-entry figure is a *success criterion*, not a measurement, so using it as the
 schedule input is circular. Verifying three source URLs alone takes minutes before reading a
@@ -504,9 +586,13 @@ any number.
 entries per PR within one subcategory and review shifts to spot-auditing. That reduces
 coverage, not cost, so `reviewed_by` alone would assert human review of entries no human
 read — recreating the slop failure in the review metadata that premise 4 exists to prevent.
-Hence `review_depth: full | sampled` on every published entry, and a plain statement in the
-README and `CONTRIBUTING.md` that post-calibration entries are sample-audited. Honest and
-still credible; silently sampled is neither.
+Hence `review_depth: full | sampled-audited | sampled-unread` on every published entry, plus
+`review_batch` (the PR number), and a plain statement in the README and `CONTRIBUTING.md`
+that post-calibration entries are sample-audited. A bare `sampled` could not distinguish "in
+a sampled batch and read" from "in a sampled batch and not read," so neither a reader nor
+`audit-sample.mjs` could derive actual coverage. `review-gate.yml` rejects `full` on any PR
+flipping more than two entries, since an unconstrained self-asserted `full` just reopens the
+defect. Honest and still credible; silently sampled is neither.
 
 ### Contribution policy (deliverable 5)
 
@@ -607,9 +693,11 @@ for nothing.
 6. **Run `catalog-expand` across the tree, review the backlog.** Main human time investment.
 7. **Write `catalog-write`, run on approved Monitoring items.** Read the first 20 closely;
    that is the calibration set. Re-derive the per-entry review minutes from it. Switch to
-   batched PRs with `review_depth: sampled` afterwards.
+   batched PRs with `review_depth: sampled-audited` or `sampled-unread` afterwards.
 8. **Stand up Starlight and `publish.yml`.** Budget a full day for the loader and custom
-   route, not an hour.
+   route, not an hour. **Spike first, 30 minutes:** confirm Starlight boots with the entries
+   in a `processes` collection and only a minimal `docs` collection present. That single
+   unknown is what the day's budget is really for.
 9. **Three categories to full depth.** Drop the WIP notice.
 10. **Launch.** Awesome-list PRs, Show HN, r/devops, `llms.txt` directories.
 
@@ -633,7 +721,8 @@ would use this, before you spend generation cycles on the wrong tree.
 
 ## Review History
 
-Two rounds of independent adversarial review, 7/10 both times, 29 then 21 issues. Round 2
+Three rounds of independent adversarial review: 29 issues, then 21, then a targeted
+verification of the fixes. 7/10 each round. Round 2
 found defects in round 1's own fixes, which is the point of a second pass.
 
 **Round 1 changed the architecture in three places.** Starlight reserves `slug` as
@@ -655,5 +744,34 @@ Also corrected: GitHub Pages on a private repo is a paid feature, so "build priv
 later" broke the $0 constraint. `prerequisite` is directional and mirrors to `enables`, not to
 itself. Rule 1 needed an escape valve or the long tail strands at `status: review` forever.
 
+**Round 3 verified the round-2 fixes rather than sweeping again**, and confirmed the entry
+glob, the registry rule set (all four ID attacks provably fail against it) and the
+public-from-day-one correction as clean. It found four blocking seams where a correct
+mechanism met an adjacent rule badly, all now fixed: `review-gate.yml` as a required check
+would have deadlocked every PR that received no review; the bot identity fixed bot→human
+approval but left the mandated hand-written entry unpublishable; `related` symmetry collided
+with legally-permitted forward references; and the allocator could not construct the registry
+row it was specified to append, because `slug` had no owner. Rule 7 was added after the same
+pass showed entry deletion was CI-green.
+
 Session-level commentary from the office-hours conversation is kept out of this file and
 lives with the session copy in `~/.gstack/projects/`.
+
+## Reviewer Concerns
+
+Open after three review rounds. Not blockers, but do not let them surprise you.
+
+1. **Starlight with no populated `docs` collection is unverified.** The design keeps a minimal
+   one as insurance. Resolve with the 30-minute spike in Next Step 8 before budgeting the
+   rest of the site work.
+2. **`type` on a source is self-assigned by the generator**, so the standard-versus-
+   practice-report boundary rests on `catalog-write`'s judgment. The domain-distinctness
+   check, the mandatory `review_depth: full` on valve entries, and the valve-percentage
+   ceiling bound the damage but do not eliminate it. Watch the percentage from the first
+   batch, not the fiftieth.
+3. **The 100-165 hour review band is still an estimate**, derived from reasoning rather than
+   measurement. Next Step 7 re-derives it from the calibration set; treat any plan built on
+   the current number as provisional.
+4. **`audit-sample.mjs` emits a worksheet for a human to score**, deliberately, rather than
+   calling a model to grade model output. That keeps the drift check honest and makes it a
+   recurring human cost that is not in the 100-165 hour figure.
