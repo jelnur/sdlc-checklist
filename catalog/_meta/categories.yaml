@@ -1,0 +1,246 @@
+# SOLE owner of category id / title / parent / order / description.
+#
+# Rules (from docs/designs/sdlc-process-catalog.md):
+#   - `category` and `subcategory` on an entry are foreign keys into this file.
+#   - A `subcategory` must declare the `parent` that entries pair it with.
+#   - Titles carry a recognized synonym in parentheses ONLY where a genuinely
+#     widely-used alternative name exists. Forcing a parenthetical onto every
+#     row would manufacture synonyms, which is the same failure as
+#     manufacturing categories.
+#   - ids stay lowercase slugs and never carry the parenthetical. Renaming an id
+#     churns a foreign key for cosmetics.
+#
+# Every category below is named by at least one recognized framework. The
+# anchor is recorded in a comment rather than a key, so a future
+# `additionalProperties: false` on categories.schema.json stays satisfiable.
+#   ISO 12207  = ISO/IEC/IEEE 12207:2017 software life cycle processes
+#   SAMM       = OWASP SAMM v2 business functions / security practices
+#   DSOMM      = OWASP DevSecOps Maturity Model dimensions
+#   DORA       = DORA / Accelerate technical + measurement capabilities
+#   SWEBOK     = SWEBOK v4 knowledge areas
+#   ITIL       = ITIL 4 service management practices
+
+categories:
+  # ISO 12207 Project Planning; SWEBOK Engineering Management; PMBOK
+  - id: planning
+    title: Project Planning (Project Management)
+    order: 10
+    description: >-
+      Deciding what will be built next, by whom, and by when: backlog shaping,
+      estimation, iteration and release planning, and capacity commitments.
+
+  # ISO 12207 Stakeholder Needs & Requirements Definition; SWEBOK Requirements
+  - id: requirements
+    title: Requirements Engineering (Requirements Management)
+    order: 20
+    description: >-
+      Eliciting, recording, agreeing and tracing what the system must do, and
+      keeping that record honest as it changes.
+
+  # ISO 9241-210 human-centred design for interactive systems
+  - id: ux
+    title: User Experience Design (Human-Centred Design)
+    order: 30
+    description: >-
+      Designing and validating the parts of the system a person touches, with
+      real users in the loop rather than after release.
+
+  # W3C WCAG 2.2 (W3C Recommendation); EN 301 549; US Section 508
+  - id: accessibility
+    title: Accessibility (a11y)
+    order: 35
+    description: >-
+      Making the product usable by people with disabilities, against a published
+      conformance standard rather than against good intentions.
+
+  # ISO 12207 Architecture Definition / Design Definition; ISO 42010; SWEBOK Design
+  - id: architecture
+    title: Architecture & Design (Software Design)
+    order: 40
+    description: >-
+      Choosing and recording structure: components, boundaries, data flow, and
+      the decisions and trade-offs behind them.
+
+  # ISO 12207 Information Management; SWEBOK Software Engineering Professional Practice
+  - id: documentation
+    title: Documentation (Technical Writing)
+    order: 50
+    description: >-
+      Producing and maintaining the written artifacts other people work from:
+      references, guides, runbooks, and interface contracts.
+
+  # ISO 12207 Configuration Management; DORA version control; DSOMM Implementation
+  - id: version-control
+    title: Version Control (Source Control Management)
+    order: 60
+    description: >-
+      How change is recorded, branched, merged and identified, so that any
+      version of the system can be reconstructed and attributed.
+
+  # ISO 12207 Implementation; SWEBOK Software Construction
+  - id: coding
+    title: Implementation (Software Construction)
+    order: 70
+    description: >-
+      Writing the code: the conventions, patterns and local rules that decide
+      whether two engineers produce work that reads as one codebase.
+
+  # ISO 12207 Verification (review); IEEE 1028 software reviews; DSOMM Implementation
+  - id: code-review
+    title: Code Review (Peer Review)
+    order: 80
+    description: >-
+      Another engineer reading a change before it lands, to catch defects,
+      spread knowledge, and hold a shared standard.
+
+  # ISO 12207 Integration; DORA continuous integration; DSOMM Build and Deployment
+  - id: build
+    title: Build & Integration (Continuous Integration)
+    order: 90
+    description: >-
+      Turning source into a tested, reproducible artifact, and integrating
+      everyone's work often enough that conflicts stay small.
+
+  # ISO 12207 Verification / Validation; ISTQB; SWEBOK Software Testing
+  - id: testing
+    title: Testing (Quality Assurance)
+    order: 100
+    description: >-
+      Deliberately trying to show the system does not work, at every level from
+      a single function to a whole environment.
+
+  # SAMM (all functions); Microsoft SDL; NIST SSDF SP 800-218; DSOMM
+  - id: security
+    title: Security (Application Security)
+    order: 110
+    description: >-
+      Finding and removing the ways the system can be abused, across design,
+      build, verification and operation.
+
+  # ISO/IEC 27701; ISO/IEC 29100; GDPR Art. 25 data protection by design; NIST Privacy Framework
+  - id: privacy
+    title: Privacy (Data Protection)
+    order: 115
+    description: >-
+      Limiting what personal data the system collects, keeps and shares, and
+      being able to evidence that decision before processing starts.
+
+  # ISO 25010 performance efficiency; ISTQB performance testing; SWEBOK
+  - id: performance
+    title: Performance Engineering (Performance Testing)
+    order: 120
+    description: >-
+      Establishing what "fast enough" and "big enough" mean, then proving the
+      system meets it under realistic load before users do.
+
+  # SLSA; CISA/NTIA SBOM; SAMM Secure Build; DSOMM Implementation
+  - id: dependency-management
+    title: Dependency Management (Software Supply Chain)
+    order: 130
+    description: >-
+      Knowing, controlling and updating everything you ship that you did not
+      write, including its provenance.
+
+  # ISO 12207 Transition; DORA deployment automation; DSOMM Build and Deployment
+  - id: release
+    title: Release Management (Deployment)
+    order: 140
+    description: >-
+      Getting a built artifact into production predictably, and getting it back
+      out again when it turns out to be wrong.
+
+  # ITIL 4 change enablement; ISO 12207 Configuration Management; DORA database change management
+  - id: change-management
+    title: Change Management (Change Control)
+    order: 150
+    description: >-
+      Governing changes whose blast radius exceeds one deployable unit: schemas,
+      shared configuration, and coordinated cross-system change.
+
+  # SAMM Environment Management; DORA infrastructure as code; DSOMM Build and Deployment
+  - id: infrastructure
+    title: Infrastructure & Environments (Environment Management)
+    order: 160
+    description: >-
+      Defining, provisioning and hardening the environments software runs in,
+      as code rather than as accumulated manual state.
+
+  # ISO 12207 Operation; Google SRE; DORA monitoring and observability
+  - id: monitoring
+    title: Monitoring (Observability)
+    order: 170
+    description: >-
+      Instrumenting the running system so its state, and the direction that
+      state is moving in, can be answered from data rather than guessed.
+
+  - id: observability-signals
+    parent: monitoring
+    title: Observability Signals
+    order: 10
+    description: >-
+      What you collect and how you read it: metrics, logs, traces, and the
+      techniques for interpreting them.
+
+  # ITIL 4 incident management; SAMM Incident Management; Google SRE
+  - id: incident-management
+    title: Incident Management (Incident Response)
+    order: 180
+    description: >-
+      Detecting, triaging, resolving and learning from failures in production,
+      including who is on the hook and how they hand over.
+
+  # ISO 22301 business continuity; NIST SP 800-34 contingency planning
+  - id: business-continuity
+    title: Business Continuity (Disaster Recovery)
+    order: 190
+    description: >-
+      Surviving the failures that ordinary incident response cannot absorb:
+      backups, restore drills, recovery objectives, and failover.
+
+  # ISO 12207 Measurement; CMMI Measurement and Analysis; DORA four keys
+  - id: measurement
+    title: Measurement & Analysis (Engineering Metrics)
+    order: 200
+    description: >-
+      Deciding what to measure about the delivery process itself, collecting it
+      honestly, and acting on it.
+
+  # SAMM Policy & Compliance and Strategy & Metrics; ISO 5230; ISO 12207 Quality Management
+  - id: governance
+    title: Governance (Policy & Compliance)
+    order: 210
+    description: >-
+      The policies, approvals and evidence trails the organisation is held to,
+      by regulators, customers, or licences.
+
+  # ISO 12207 Risk Management; ISO 31000; CMMI Risk Management
+  - id: risk-management
+    title: Risk Management
+    order: 220
+    description: >-
+      Identifying what could go wrong before it does, deciding who owns each
+      one, and revisiting those decisions on a schedule.
+
+  # SAMM Education & Guidance; ISO 12207 Human Resource Management
+  - id: education
+    title: Education & Guidance (Training & Enablement)
+    order: 230
+    description: >-
+      Building and refreshing the skills the lifecycle assumes people already
+      have, including onboarding and internal advocacy.
+
+  # ISO 12207 Maintenance; ISO 14764; SWEBOK Software Maintenance
+  - id: maintenance
+    title: Maintenance (Sustainment)
+    order: 240
+    description: >-
+      Keeping shipped software working and workable: corrective fixes,
+      dependency currency, and paying down accumulated compromise.
+
+  # ISO 12207 Disposal
+  - id: decommissioning
+    title: Decommissioning (Disposal)
+    order: 250
+    description: >-
+      Retiring a system, endpoint or feature on purpose, with notice, migration
+      support, and data disposed of rather than abandoned.

@@ -6,8 +6,117 @@
 #   - IDs are unique and strictly increasing. Never reused, even after a file is deleted.
 #   - Normally written ONLY by scripts/approve-backlog.mjs. SDLC-0001 is a hand-bootstrapped
 #     exception because it predates the allocator.
+#
+#   SDLC-0002 through SDLC-0027 extend that same bootstrap exception: they are the
+#   one-sample-per-category seed set, written before approve-backlog.mjs and before
+#   catalog/_meta/backlog/ exists, so there was no approved backlog item to allocate from.
+#   Every later ID must come from the allocator. This block is the last hand-written batch.
 entries:
   - id: SDLC-0001
     slug: weak-signal-monitoring
     first_seen: 2026-08-20
+    state: active
+  - id: SDLC-0002
+    slug: sprint-planning
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0003
+    slug: user-story-mapping
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0004
+    slug: usability-testing
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0005
+    slug: architecture-decision-records
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0006
+    slug: api-documentation
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0007
+    slug: trunk-based-development
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0008
+    slug: coding-standards
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0009
+    slug: pull-request-review
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0010
+    slug: continuous-integration
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0011
+    slug: unit-testing
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0012
+    slug: threat-modeling
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0013
+    slug: load-testing
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0014
+    slug: software-bill-of-materials
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0015
+    slug: blue-green-deployment
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0016
+    slug: database-change-management
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0017
+    slug: infrastructure-as-code
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0018
+    slug: blameless-postmortem
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0019
+    slug: disaster-recovery-planning
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0020
+    slug: dora-metrics
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0021
+    slug: open-source-license-compliance
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0022
+    slug: risk-register
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0023
+    slug: security-champions
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0024
+    slug: technical-debt-management
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0025
+    slug: deprecation-policy
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0026
+    slug: accessibility-conformance-testing
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0027
+    slug: data-protection-impact-assessment
+    first_seen: 2026-08-21
     state: active
