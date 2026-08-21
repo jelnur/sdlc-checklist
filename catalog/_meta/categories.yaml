@@ -45,6 +45,14 @@ categories:
       Designing and validating the parts of the system a person touches, with
       real users in the loop rather than after release.
 
+  # W3C WCAG 2.2 (W3C Recommendation); EN 301 549; US Section 508
+  - id: accessibility
+    title: Accessibility (a11y)
+    order: 35
+    description: >-
+      Making the product usable by people with disabilities, against a published
+      conformance standard rather than against good intentions.
+
   # ISO 12207 Architecture Definition / Design Definition; ISO 42010; SWEBOK Design
   - id: architecture
     title: Architecture & Design (Software Design)
@@ -108,6 +116,14 @@ categories:
     description: >-
       Finding and removing the ways the system can be abused, across design,
       build, verification and operation.
+
+  # ISO/IEC 27701; ISO/IEC 29100; GDPR Art. 25 data protection by design; NIST Privacy Framework
+  - id: privacy
+    title: Privacy (Data Protection)
+    order: 115
+    description: >-
+      Limiting what personal data the system collects, keeps and shares, and
+      being able to evidence that decision before processing starts.
 
   # ISO 25010 performance efficiency; ISTQB performance testing; SWEBOK
   - id: performance

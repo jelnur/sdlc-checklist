@@ -69,5 +69,3 @@ then write the next real decision up as 0002.
 ## References
 
 Rendered from `sources` at build time.
-
-- `iso.org` returns 403 to automated checkers and needs the link-check allowlist.

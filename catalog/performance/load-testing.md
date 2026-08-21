@@ -79,5 +79,3 @@ k6, and run it against a production-like environment until the target is missed.
 ## References
 
 Rendered from `sources` at build time.
-
-- `iso.org` returns 403 to automated checkers and needs the link-check allowlist.

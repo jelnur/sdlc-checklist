@@ -84,5 +84,3 @@ measurement and the objective is your plan.
 ## References
 
 Rendered from `sources` at build time.
-
-- `iso.org` returns 403 to automated checkers and needs the link-check allowlist.

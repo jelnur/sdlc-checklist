@@ -19,7 +19,7 @@ sources:
     type: standard
   - title: "Microsoft Security Development Lifecycle"
     url: https://www.microsoft.com/en-us/securityengineering/sdl
-    type: standard
+    type: vendor-doc
 status: draft
 generated_by: assistant:claude-opus-5
 ---

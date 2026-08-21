@@ -16,7 +16,7 @@ sources:
     type: standard
   - title: "Manifesto for Agile Software Development"
     url: https://agilemanifesto.org/
-    type: standard
+    type: practice-report
 status: draft
 generated_by: assistant:claude-opus-5
 ---

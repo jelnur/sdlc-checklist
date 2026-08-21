@@ -7,7 +7,7 @@
 #   - Normally written ONLY by scripts/approve-backlog.mjs. SDLC-0001 is a hand-bootstrapped
 #     exception because it predates the allocator.
 #
-#   SDLC-0002 through SDLC-0025 extend that same bootstrap exception: they are the
+#   SDLC-0002 through SDLC-0027 extend that same bootstrap exception: they are the
 #   one-sample-per-category seed set, written before approve-backlog.mjs and before
 #   catalog/_meta/backlog/ exists, so there was no approved backlog item to allocate from.
 #   Every later ID must come from the allocator. This block is the last hand-written batch.
@@ -110,5 +110,13 @@ entries:
     state: active
   - id: SDLC-0025
     slug: deprecation-policy
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0026
+    slug: accessibility-conformance-testing
+    first_seen: 2026-08-21
+    state: active
+  - id: SDLC-0027
+    slug: data-protection-impact-assessment
     first_seen: 2026-08-21
     state: active

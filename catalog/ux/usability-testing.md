@@ -71,5 +71,3 @@ users, and watch each of them attempt it without help.
 ## References
 
 Rendered from `sources` at build time.
-
-- `iso.org` returns 403 to automated checkers and needs the link-check allowlist.
