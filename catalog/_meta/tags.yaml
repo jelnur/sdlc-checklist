@@ -1,0 +1,100 @@
+# Closed tag vocabulary. `tags` on an entry is a foreign key into this file.
+#
+# Tags are the cross-cutting axis: they carry the relationships that the
+# category tree cannot, because the taxonomy is a graph and folders are only
+# editing convenience. Keep this list small and deliberate. An open vocabulary
+# degenerates into per-entry freeform keywords, which is the failure this file
+# exists to prevent.
+#
+# Seeded from SDLC-0001 (observability, reliability, incident-response,
+# security) plus the minimum needed by the one-per-category sample set. Add a
+# tag only when at least two entries would carry it.
+
+tags:
+  - id: agile
+    title: Agile
+    description: Iterative, incremental ways of working.
+  - id: architecture
+    title: Architecture
+    description: Structural decisions and their records.
+  - id: automation
+    title: Automation
+    description: Replacing a manual step with a machine-executed one.
+  - id: business-continuity
+    title: Business Continuity
+    description: Surviving loss of a system, a region, or data.
+  - id: change-control
+    title: Change Control
+    description: Governing changes with a blast radius beyond one unit.
+  - id: code-quality
+    title: Code Quality
+    description: Readability, consistency and internal soundness of code.
+  - id: compliance
+    title: Compliance
+    description: Meeting external policy, licence or regulatory obligations.
+  - id: continuous-integration
+    title: Continuous Integration
+    description: Frequent integration and automated verification of change.
+  - id: data
+    title: Data
+    description: Stored state: schemas, migrations, retention, pipelines.
+  - id: deployment
+    title: Deployment
+    description: Moving artifacts into an environment and back out.
+  - id: documentation
+    title: Documentation
+    description: Written artifacts other people work from.
+  - id: incident-response
+    title: Incident Response
+    description: Detecting, handling and learning from production failure.
+  - id: infrastructure
+    title: Infrastructure
+    description: The environments software runs in.
+  - id: lifecycle-end
+    title: Lifecycle End
+    description: Deprecation, retirement and disposal.
+  - id: maintenance
+    title: Maintenance
+    description: Keeping shipped software working and workable.
+  - id: metrics
+    title: Metrics
+    description: Measuring the delivery process itself.
+  - id: observability
+    title: Observability
+    description: Answering questions about a running system from its data.
+  - id: performance
+    title: Performance
+    description: Latency, throughput and resource efficiency.
+  - id: planning
+    title: Planning
+    description: Deciding and committing to what gets built next.
+  - id: reliability
+    title: Reliability
+    description: Whether the system keeps working under real conditions.
+  - id: requirements
+    title: Requirements
+    description: Capturing and tracing what the system must do.
+  - id: review
+    title: Review
+    description: A second person inspecting work before it lands.
+  - id: risk
+    title: Risk
+    description: Identifying and owning what could go wrong.
+  - id: security
+    title: Security
+    description: Removing the ways the system can be abused.
+  - id: supply-chain
+    title: Supply Chain
+    description: Everything you ship that you did not write.
+  - id: testing
+    title: Testing
+    description: Deliberately trying to show the system does not work.
+  - id: training
+    title: Training
+    description: Building the skills the lifecycle assumes people have.
+  - id: ux
+    title: User Experience
+    description: The parts of the system a person touches.
+  - id: version-control
+    title: Version Control
+    description: How change is recorded, branched and identified.
