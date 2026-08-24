@@ -8,23 +8,37 @@
 // the eventual Astro + Starlight architecture (categories.yaml, content
 // collections, build-catalog/build-index) which supersedes this script.
 
-import { readdirSync, readFileSync, mkdirSync, writeFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {
+  readdirSync,
+  readFileSync,
+  mkdirSync,
+  writeFileSync,
+  statSync,
+} from "node:fs";
+import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = join(fileURLToPath(import.meta.url), '..', '..');
-const CATALOG_DIR = join(ROOT, 'catalog');
-const OUT_DIR = join(ROOT, process.argv[2] || 'dist-site');
-const PHASES = ['plan', 'design', 'build', 'verify', 'release', 'operate', 'govern'];
+const ROOT = join(fileURLToPath(import.meta.url), "..", "..");
+const CATALOG_DIR = join(ROOT, "catalog");
+const OUT_DIR = join(ROOT, process.argv[2] || "dist-site");
+const PHASES = [
+  "plan",
+  "design",
+  "build",
+  "verify",
+  "release",
+  "operate",
+  "govern",
+];
 
 function findEntryFiles(dir) {
   const out = [];
   for (const name of readdirSync(dir)) {
-    if (name.startsWith('_')) continue;
+    if (name.startsWith("_")) continue;
     const full = join(dir, name);
     const st = statSync(full);
     if (st.isDirectory()) out.push(...findEntryFiles(full));
-    else if (name.endsWith('.md')) out.push(full);
+    else if (name.endsWith(".md")) out.push(full);
   }
   return out;
 }
@@ -34,30 +48,31 @@ function findEntryFiles(dir) {
 // commits to, so a hand-rolled parser stays honest about what it supports.
 function parseFrontmatter(raw) {
   const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  if (!match) throw new Error('missing frontmatter block');
+  if (!match) throw new Error("missing frontmatter block");
   const [, fmText, body] = match;
   const fm = {};
-  const lines = fmText.split('\n');
+  const lines = fmText.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const kv = line.match(/^([a-z_]+):\s*(.*)$/);
     if (!kv) continue;
     const [, key, rest] = kv;
-    if (rest === '' && lines[i + 1] && /^\s+-/.test(lines[i + 1])) {
+    if (rest === "" && lines[i + 1] && /^\s+-/.test(lines[i + 1])) {
       // block list (only `sources` uses this); skip its lines, unused by the site
       i++;
-      while (i < lines.length && /^\s/.test(lines[i]) && lines[i].trim() !== '') i++;
+      while (i < lines.length && /^\s/.test(lines[i]) && lines[i].trim() !== "")
+        i++;
       i--;
       continue;
     }
-    if (rest.startsWith('[') && rest.endsWith(']')) {
+    if (rest.startsWith("[") && rest.endsWith("]")) {
       fm[key] = rest
         .slice(1, -1)
-        .split(',')
+        .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
     } else {
-      fm[key] = rest.replace(/^"(.*)"$/, '$1');
+      fm[key] = rest.replace(/^"(.*)"$/, "$1");
     }
   }
   return { fm, body: body.trim() };
@@ -67,26 +82,26 @@ function parseFrontmatter(raw) {
 // headings, paragraphs, bullet/numbered lists, bold/italic, inline code,
 // links, blockquotes, fenced code blocks, hr.
 function renderMarkdown(md) {
-  const lines = md.split('\n');
+  const lines = md.split("\n");
   const out = [];
   let i = 0;
   let listType = null;
 
   function closeList() {
     if (listType) {
-      out.push(listType === 'ul' ? '</ul>' : '</ol>');
+      out.push(listType === "ul" ? "</ul>" : "</ol>");
       listType = null;
     }
   }
 
   function inline(text) {
     return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
   }
 
@@ -101,7 +116,9 @@ function renderMarkdown(md) {
         code.push(lines[i]);
         i++;
       }
-      out.push(`<pre><code>${code.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</code></pre>`);
+      out.push(
+        `<pre><code>${code.join("\n").replace(/&/g, "&amp;").replace(/</g, "&lt;")}</code></pre>`,
+      );
       i++;
       continue;
     }
@@ -109,36 +126,45 @@ function renderMarkdown(md) {
     if (/^#{1,4}\s/.test(line)) {
       closeList();
       const level = line.match(/^#+/)[0].length;
-      out.push(`<h${level}>${inline(line.replace(/^#+\s*/, ''))}</h${level}>`);
+      out.push(`<h${level}>${inline(line.replace(/^#+\s*/, ""))}</h${level}>`);
       i++;
       continue;
     }
 
     if (/^\s*[-*]\s+/.test(line)) {
-      if (listType !== 'ul') {
+      if (listType !== "ul") {
         closeList();
-        out.push('<ul>');
-        listType = 'ul';
+        out.push("<ul>");
+        listType = "ul";
       }
-      out.push(`<li>${inline(line.replace(/^\s*[-*]\s+/, ''))}</li>`);
+      out.push(`<li>${inline(line.replace(/^\s*[-*]\s+/, ""))}</li>`);
       i++;
       continue;
     }
 
     if (/^\s*\d+\.\s+/.test(line)) {
-      if (listType !== 'ol') {
+      if (listType !== "ol") {
         closeList();
-        out.push('<ol>');
-        listType = 'ol';
+        out.push("<ol>");
+        listType = "ol";
       }
-      out.push(`<li>${inline(line.replace(/^\s*\d+\.\s+/, ''))}</li>`);
+      out.push(`<li>${inline(line.replace(/^\s*\d+\.\s+/, ""))}</li>`);
       i++;
       continue;
     }
 
-    if (/^\|.*\|\s*$/.test(line) && lines[i + 1] && /^\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+    if (
+      /^\|.*\|\s*$/.test(line) &&
+      lines[i + 1] &&
+      /^\|[\s:|-]+\|\s*$/.test(lines[i + 1])
+    ) {
       closeList();
-      const splitRow = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+      const splitRow = (l) =>
+        l
+          .trim()
+          .replace(/^\||\|$/g, "")
+          .split("|")
+          .map((c) => c.trim());
       const header = splitRow(line);
       i += 2;
       const bodyRows = [];
@@ -146,9 +172,15 @@ function renderMarkdown(md) {
         bodyRows.push(splitRow(lines[i]));
         i++;
       }
-      const thead = `<tr>${header.map((c) => `<th>${inline(c)}</th>`).join('')}</tr>`;
-      const tbody = bodyRows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('');
-      out.push(`<div class="table-scroll"><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`);
+      const thead = `<tr>${header.map((c) => `<th>${inline(c)}</th>`).join("")}</tr>`;
+      const tbody = bodyRows
+        .map(
+          (r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`,
+        )
+        .join("");
+      out.push(
+        `<div class="table-scroll"><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`,
+      );
       continue;
     }
 
@@ -156,21 +188,21 @@ function renderMarkdown(md) {
       closeList();
       const quote = [];
       while (i < lines.length && /^>\s?/.test(lines[i])) {
-        quote.push(inline(lines[i].replace(/^>\s?/, '')));
+        quote.push(inline(lines[i].replace(/^>\s?/, "")));
         i++;
       }
-      out.push(`<blockquote><p>${quote.join('<br>')}</p></blockquote>`);
+      out.push(`<blockquote><p>${quote.join("<br>")}</p></blockquote>`);
       continue;
     }
 
     if (/^\s*---\s*$/.test(line)) {
       closeList();
-      out.push('<hr>');
+      out.push("<hr>");
       i++;
       continue;
     }
 
-    if (line.trim() === '') {
+    if (line.trim() === "") {
       closeList();
       i++;
       continue;
@@ -179,23 +211,35 @@ function renderMarkdown(md) {
     closeList();
     const para = [line];
     i++;
-    while (i < lines.length && lines[i].trim() !== '' && !/^#{1,4}\s|^\s*[-*]\s+|^\s*\d+\.\s+|^>\s?|^```|^\s*---\s*$|^\|.*\|\s*$/.test(lines[i])) {
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !/^#{1,4}\s|^\s*[-*]\s+|^\s*\d+\.\s+|^>\s?|^```|^\s*---\s*$|^\|.*\|\s*$/.test(
+        lines[i],
+      )
+    ) {
       para.push(lines[i]);
       i++;
     }
-    out.push(`<p>${inline(para.join(' '))}</p>`);
+    out.push(`<p>${inline(para.join(" "))}</p>`);
   }
   closeList();
-  return out.join('\n');
+  return out.join("\n");
 }
 
 function titleCase(slug) {
-  const fixed = { ux: 'UX' };
-  return slug.split('-').map((w) => fixed[w] || w[0].toUpperCase() + w.slice(1)).join(' ');
+  const fixed = { ux: "UX" };
+  return slug
+    .split("-")
+    .map((w) => fixed[w] || w[0].toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
 function esc(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 const BASE_CSS = `
@@ -286,8 +330,8 @@ function layout({ title, description, body }) {
 function main() {
   const files = findEntryFiles(CATALOG_DIR).sort();
   const entries = files.map((f) => {
-    const { fm, body } = parseFrontmatter(readFileSync(f, 'utf8'));
-    const category = relative(CATALOG_DIR, f).split('/')[0];
+    const { fm, body } = parseFrontmatter(readFileSync(f, "utf8"));
+    const category = relative(CATALOG_DIR, f).split("/")[0];
     return { ...fm, category, body };
   });
 
@@ -307,30 +351,30 @@ function main() {
     .map((e) => {
       const phases = e.lifecycle_phase || [];
       const cells = PHASES.map(
-        (p) => `<td class="ph"><span class="mark${phases.includes(p) ? '' : ' off'}" title="${p}"></span></td>`
-      ).join('');
+        (p) =>
+          `<td class="ph"><span class="mark${phases.includes(p) ? "" : " off"}" title="${p}"></span></td>`,
+      ).join("");
       return `<tr>
         <td class="cat"><a href="./#${esc(e.category)}">${esc(titleCase(e.category))}</a><small>${esc(e.category)}</small></td>
-        <td class="entry"><a href="p/${esc(e.slug)}/">${esc(e.title)}</a><em>${esc(e.summary || '')}</em></td>
+        <td class="entry"><a href="p/${esc(e.slug)}/">${esc(e.title)}</a><em>${esc(e.summary || "")}</em></td>
         ${cells}
         <td><span class="badge">L${esc(e.adoption_level)}</span></td>
       </tr>`;
     })
-    .join('\n');
+    .join("\n");
 
-  const phaseHeads = PHASES.map((p) => `<th class="ph">${p.slice(0, 4)}</th>`).join('');
+  const phaseHeads = PHASES.map(
+    (p) => `<th class="ph">${p.slice(0, 4)}</th>`,
+  ).join("");
 
   const indexBody = `<div class="wrap">
   <header style="display:flex;flex-direction:column;gap:.9rem">
     <p class="eyebrow">sdlc-checklist &middot; catalog</p>
     <h1>SDLC Process Catalog</h1>
-    <p class="lede">${categories.length} categories, ${entries.length} processes, generated at build time
-      from <code>catalog/**/*.md</code>. All entries are <code>status: draft</code> &mdash; nothing here
-      is final.</p>
     <div class="stats">
       <div class="stat"><b>${categories.length}</b><span>categories</span></div>
       <div class="stat"><b>${entries.length}</b><span>entries</span></div>
-      <div class="stat"><b>${entries.filter((e) => e.status === 'published').length}</b><span>published</span></div>
+      <div class="stat"><b>${entries.filter((e) => e.status === "published").length}</b><span>published</span></div>
     </div>
   </header>
   <section class="scroll">
@@ -342,43 +386,53 @@ function main() {
   <footer>Built ${new Date().toISOString().slice(0, 10)} by <code>scripts/build-site.mjs</code> from the catalog on this branch.</footer>
 </div>`;
 
-  writeFileSync(join(OUT_DIR, 'index.html'), layout({
-    title: 'SDLC Process Catalog',
-    description: `${categories.length} categories, ${entries.length} SDLC processes.`,
-    body: indexBody,
-  }));
+  writeFileSync(
+    join(OUT_DIR, "index.html"),
+    layout({
+      title: "SDLC Process Catalog",
+      description: `${categories.length} categories, ${entries.length} SDLC processes.`,
+      body: indexBody,
+    }),
+  );
 
   // Entry pages
   for (const e of entries) {
-    const dir = join(OUT_DIR, 'p', e.slug);
+    const dir = join(OUT_DIR, "p", e.slug);
     mkdirSync(dir, { recursive: true });
     const meta = [
       `<span class="badge">${esc(e.category)}</span>`,
       `<span class="badge">adoption L${esc(e.adoption_level)}</span>`,
       `<span class="badge">effort: ${esc(e.effort)}</span>`,
       `<span class="badge">automatable: ${esc(e.automatable)}</span>`,
-      ...(e.lifecycle_phase || []).map((p) => `<span class="badge">${esc(p)}</span>`),
-    ].join('\n');
+      ...(e.lifecycle_phase || []).map(
+        (p) => `<span class="badge">${esc(p)}</span>`,
+      ),
+    ].join("\n");
     const body = `<div class="wrap">
       <div class="back"><a href="../../">&larr; all categories</a></div>
       <div class="entry-head">
         <p class="eyebrow">${esc(e.id)} &middot; ${esc(titleCase(e.category))}</p>
         <h1>${esc(e.title)}</h1>
-        <p class="lede">${esc(e.summary || '')}</p>
+        <p class="lede">${esc(e.summary || "")}</p>
         <div class="entry-meta">${meta}</div>
       </div>
       <article class="prose">${renderMarkdown(e.body)}</article>
       <footer>Status: ${esc(e.status)} &middot; generated_by: ${esc(e.generated_by)}</footer>
     </div>`;
-    writeFileSync(join(dir, 'index.html'), layout({
-      title: `${e.title} — SDLC Process Catalog`,
-      description: e.summary || '',
-      body,
-    }));
+    writeFileSync(
+      join(dir, "index.html"),
+      layout({
+        title: `${e.title} — SDLC Process Catalog`,
+        description: e.summary || "",
+        body,
+      }),
+    );
   }
 
-  writeFileSync(join(OUT_DIR, '.nojekyll'), '');
-  console.log(`built ${entries.length} entries across ${categories.length} categories -> ${relative(ROOT, OUT_DIR)}/`);
+  writeFileSync(join(OUT_DIR, ".nojekyll"), "");
+  console.log(
+    `built ${entries.length} entries across ${categories.length} categories -> ${relative(ROOT, OUT_DIR)}/`,
+  );
 }
 
 main();
