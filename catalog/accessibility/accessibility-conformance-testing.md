@@ -33,8 +33,7 @@ obligation rather than a quality preference.
 ## Examples
 
 - `axe-core` running in the end-to-end suite, failing the build on new violations.
-- A manual pass over the checkout flow with keyboard only, then with a screen reader, because
-  focus order and announcement quality are not machine-detectable.
+- A manual pass over the checkout flow with keyboard only, then with a screen reader, because focus order and announcement quality are not machine-detectable.
 - A moderated session with a screen-reader user, which finds the problems the first two miss.
 
 ## What Good Looks Like
