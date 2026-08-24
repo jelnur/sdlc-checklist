@@ -3,6 +3,7 @@ docs/
 
 # Build output
 dist/
+dist-site/
 
 # Generated into a tracked directory by the build chain
 site/public/llms.txt
