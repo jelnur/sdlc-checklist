@@ -28,8 +28,7 @@ indistinguishable from risk nobody noticed, and both surface at the same moment.
 
 ## Examples
 
-- A register row: single-region database, likelihood low, impact severe, owner named, response
-  "accept until Q4, multi-region work scheduled", review date set.
+- A register row: single-region database, likelihood low, impact severe, owner named, response "accept until Q4, multi-region work scheduled", review date set.
 - A quarterly review where each row is confirmed, changed, closed, or escalated.
 
 ## What Good Looks Like
@@ -60,8 +59,7 @@ materialised while sitting in the register versus those that were never recorded
 - A register written for an audit and not opened again.
 - Rows owned by a department.
 - Everything rated high, which conveys no ordering.
-- Accepted risks with no review date, which is how a temporary compromise becomes the
-  architecture.
+- Accepted risks with no review date, which is how a temporary compromise becomes the architecture.
 
 ## Tooling
 

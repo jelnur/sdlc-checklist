@@ -28,8 +28,7 @@ someone with the context and the training inside each team instead.
 
 ## Examples
 
-- One engineer per squad who runs the team's threat-modelling session and triages its dependency
-  alerts, with a standing hour a week for it.
+- One engineer per squad who runs the team's threat-modelling session and triages its dependency alerts, with a standing hour a week for it.
 - A monthly champions forum where findings and fixes from one team reach the others.
 
 ## What Good Looks Like
@@ -62,8 +61,7 @@ without one, champion retention, and threat models run without central involveme
 - Appointing a champion with no time allocated.
 - The champion becoming the only person in the team who cares about security.
 - No path back to the security team, leaving the champion isolated.
-- Using the role as a way to shift accountability off the security team without shifting support
-  with it.
+- Using the role as a way to shift accountability off the security team without shifting support with it.
 
 ## Tooling
 

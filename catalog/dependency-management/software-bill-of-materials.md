@@ -32,10 +32,8 @@ weekend of grepping.
 
 ## Examples
 
-- A CycloneDX document produced by the build for every release artifact and attached to the
-  release.
-- Nightly scanning of stored SBOMs against a vulnerability feed, so newly published CVEs
-  match against already-shipped versions.
+- A CycloneDX document produced by the build for every release artifact and attached to the release.
+- Nightly scanning of stored SBOMs against a vulnerability feed, so newly published CVEs match against already-shipped versions.
 
 ## What Good Looks Like
 

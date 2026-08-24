@@ -29,8 +29,7 @@ survey and behaviour observed under task are frequently different.
 ## Examples
 
 - Five people asked to complete signup on a prototype while the researcher stays silent.
-- An unmoderated remote test where the task and the screen recording are collected
-  asynchronously.
+- An unmoderated remote test where the task and the screen recording are collected asynchronously.
 
 ## What Good Looks Like
 

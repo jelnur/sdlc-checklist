@@ -28,10 +28,8 @@ and unversioned state is what makes a deployment impossible to roll back.
 
 ## Examples
 
-- Numbered migration files under version control, applied by the pipeline before the new
-  application version starts.
-- An expand-and-contract sequence: add the new column and write to both, backfill, switch
-  reads, then drop the old column in a later release.
+- Numbered migration files under version control, applied by the pipeline before the new application version starts.
+- An expand-and-contract sequence: add the new column and write to both, backfill, switch reads, then drop the old column in a later release.
 
 ## What Good Looks Like
 
@@ -43,12 +41,9 @@ restore.
 
 - Keep migrations in the application repository, reviewed in the same change.
 - Expand and contract: never make a breaking change and a code change in one release.
-- Make migrations idempotent and forward-only; prefer a new migration over editing an applied
-  one.
-- Test migrations against a production-sized copy, because locking behaviour depends on data
-  volume.
-- Separate the long-running backfill from the schema change, so a deployment is not blocked by
-  it.
+- Make migrations idempotent and forward-only; prefer a new migration over editing an applied one.
+- Test migrations against a production-sized copy, because locking behaviour depends on data volume.
+- Separate the long-running backfill from the schema change, so a deployment is not blocked by it.
 
 ## Automation
 

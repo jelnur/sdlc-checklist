@@ -28,10 +28,8 @@ licences require. This is cheap in the build and expensive at acquisition due di
 
 ## Examples
 
-- A CI check that fails the build when a dependency introduces a copyleft licence not on the
-  allowlist.
-- A generated `NOTICES` file, shipped with the artifact, listing each component's licence and
-  attribution.
+- A CI check that fails the build when a dependency introduces a copyleft licence not on the allowlist.
+- A generated `NOTICES` file, shipped with the artifact, listing each component's licence and attribution.
 
 ## What Good Looks Like
 

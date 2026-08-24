@@ -28,8 +28,7 @@ the environment that was working a minute ago, the cost of shipping drops.
 
 ## Examples
 
-- Two identical target groups behind one load balancer, with the listener switched after
-  smoke tests pass against the idle environment.
+- Two identical target groups behind one load balancer, with the listener switched after smoke tests pass against the idle environment.
 - Keeping the old environment warm for an hour after cutover, as the rollback path.
 
 ## What Good Looks Like
@@ -41,8 +40,7 @@ backward-compatible so both versions can run against one database.
 ## Best Practices
 
 - Smoke-test the idle environment before switching, not after.
-- Keep database changes backward-compatible; the shared database is what actually constrains
-  this pattern.
+- Keep database changes backward-compatible; the shared database is what actually constrains this pattern.
 - Keep the old environment available long enough to roll back to it.
 - Drain connections on cutover rather than cutting them.
 - Automate the switch, so a rollback under pressure is one command.
@@ -60,8 +58,7 @@ back successfully.
 ## Anti-Patterns
 
 - Environments that have drifted apart, so the switch is not like-for-like.
-- Backward-incompatible schema migrations, which make rollback impossible whatever the routing
-  does.
+- Backward-incompatible schema migrations, which make rollback impossible whatever the routing does.
 - Tearing down the old environment immediately, which discards the rollback path.
 - Manual cutover steps, exactly when calm execution matters most.
 

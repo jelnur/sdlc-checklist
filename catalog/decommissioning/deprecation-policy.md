@@ -31,10 +31,8 @@ default, and the cost of that accumulates silently until nothing can be changed.
 
 ## Examples
 
-- A stated policy that a deprecated API version keeps working for twelve months from the
-  announcement, with a documented migration path.
-- Deprecation surfaced in-band: a response header and a log warning on every call to the old
-  endpoint, plus usage metrics showing who is still calling it.
+- A stated policy that a deprecated API version keeps working for twelve months from the announcement, with a documented migration path.
+- Deprecation surfaced in-band: a response header and a log warning on every call to the old endpoint, plus usage metrics showing who is still calling it.
 
 ## What Good Looks Like
 
@@ -44,8 +42,7 @@ and removals actually happen on the date.
 
 ## Best Practices
 
-- Publish the support window before the first deprecation, so it is a rule rather than a
-  negotiation.
+- Publish the support window before the first deprecation, so it is a rule rather than a negotiation.
 - Announce with a date and a migration path in the same message.
 - Signal in-band as well as in release notes: headers, log warnings, deprecation annotations.
 - Instrument usage of the deprecated thing, so you know who is left rather than guessing.

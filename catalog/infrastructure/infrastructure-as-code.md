@@ -31,10 +31,8 @@ knowledge held in one person's memory, and it cannot be rebuilt, diffed, or revi
 
 ## Examples
 
-- Terraform modules defining a service's network, compute and database, applied from CI on
-  merge.
-- Kubernetes manifests reconciled continuously by Argo CD, so the cluster converges on the
-  committed state.
+- Terraform modules defining a service's network, compute and database, applied from CI on merge.
+- Kubernetes manifests reconciled continuously by Argo CD, so the cluster converges on the committed state.
 
 ## What Good Looks Like
 

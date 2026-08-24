@@ -31,8 +31,7 @@ boundary is a diagram problem before it is a code problem, and no scanner will f
 
 ## Examples
 
-- A one-hour session over a new payment flow's data-flow diagram, walking trust boundaries
-  and filing each accepted risk as a ticket.
+- A one-hour session over a new payment flow's data-flow diagram, walking trust boundaries and filing each accepted risk as a ticket.
 - Re-modelling an existing service when it gains its first external API.
 
 ## What Good Looks Like
@@ -45,8 +44,7 @@ session.
 
 - Draw the data-flow diagram first; you cannot reason about boundaries you have not drawn.
 - Use a prompt framework such as STRIDE so coverage does not depend on who is in the room.
-- Answer the four questions: what are we building, what can go wrong, what will we do, did we
-  do a good job.
+- Answer the four questions: what are we building, what can go wrong, what will we do, did we do a good job.
 - File every finding as a tracked ticket, including the ones you accept, with the reason.
 - Time-box it. A four-hour session that happens beats a perfect one that does not.
 

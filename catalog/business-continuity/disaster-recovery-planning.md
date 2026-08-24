@@ -28,10 +28,8 @@ region, a deleted database, an encrypted fileset. An untested backup is a hypoth
 
 ## Examples
 
-- Documented recovery point and recovery time objectives per system, with backup frequency
-  derived from them rather than chosen by habit.
-- A quarterly game day that restores the production database into an isolated environment and
-  times it.
+- Documented recovery point and recovery time objectives per system, with backup frequency derived from them rather than chosen by habit.
+- A quarterly game day that restores the production database into an isolated environment and times it.
 
 ## What Good Looks Like
 
@@ -44,11 +42,9 @@ or immutable.
 - Set the objectives first; backup design follows from them.
 - Rehearse the restore on a schedule, and record the time it actually took.
 - Keep one immutable or offline copy, so ransomware cannot reach the backups.
-- Test the restore path, not just backup completion; a backup that cannot be read is not a
-  backup.
+- Test the restore path, not just backup completion; a backup that cannot be read is not a backup.
 - Write the runbook for someone who was not involved in designing it.
-- Include the dependencies: DNS, secrets, certificates, and the third parties you need to come
-  back.
+- Include the dependencies: DNS, secrets, certificates, and the third parties you need to come back.
 
 ## Automation
 

@@ -28,10 +28,8 @@ one whose real contract lives in whatever the last caller happened to observe.
 
 ## Examples
 
-- An OpenAPI document checked into the repo, rendered as reference docs and used to generate
-  client SDKs.
-- A getting-started tutorial alongside that reference, because a schema dump is not an
-  onboarding path.
+- An OpenAPI document checked into the repo, rendered as reference docs and used to generate client SDKs.
+- A getting-started tutorial alongside that reference, because a schema dump is not an onboarding path.
 
 ## What Good Looks Like
 
@@ -42,10 +40,8 @@ each other.
 ## Best Practices
 
 - Keep one machine-readable description as the source of truth, versioned with the code.
-- Validate the description against the real service in CI, or generate it from the
-  implementation.
-- Separate reference from tutorial. Diátaxis names the four kinds; mixing them produces
-  documents that serve nobody.
+- Validate the description against the real service in CI, or generate it from the implementation.
+- Separate reference from tutorial. Diátaxis names the four kinds; mixing them produces documents that serve nobody.
 - Document errors and rate limits, which is what integrators actually get stuck on.
 
 ## Automation

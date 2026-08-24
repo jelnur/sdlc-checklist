@@ -28,8 +28,7 @@ journey or a scattering of half-finished features.
 
 ## Examples
 
-- Mapping a checkout flow left to right, then drawing a horizontal line for the first
-  release so the slice below it is a walkable path end to end.
+- Mapping a checkout flow left to right, then drawing a horizontal line for the first release so the slice below it is a walkable path end to end.
 - Using the map in a kickoff to find the step nobody had a story for.
 
 ## What Good Looks Like

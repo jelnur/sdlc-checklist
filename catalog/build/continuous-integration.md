@@ -29,8 +29,7 @@ still remembers the change and the diff is still small.
 ## Examples
 
 - A GitHub Actions workflow that builds, lints and tests on every push and pull request.
-- A pipeline that produces one immutable artifact and reuses it for every later stage rather
-  than rebuilding per environment.
+- A pipeline that produces one immutable artifact and reuses it for every later stage rather than rebuilding per environment.
 
 ## What Good Looks Like
 

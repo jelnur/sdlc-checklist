@@ -28,10 +28,8 @@ and the fix is to shorten the branch rather than get better at merging.
 
 ## Examples
 
-- Branches that live under a day and merge behind a feature flag when the work is not
-  finished.
-- A release branch cut from trunk for a versioned product, with fixes cherry-picked from
-  trunk rather than developed on the branch.
+- Branches that live under a day and merge behind a feature flag when the work is not finished.
+- A release branch cut from trunk for a versioned product, with fixes cherry-picked from trunk rather than developed on the branch.
 
 ## What Good Looks Like
 

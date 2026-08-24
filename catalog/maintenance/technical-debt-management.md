@@ -28,8 +28,7 @@ recorded is paid anyway, as unexplained slowness, and nobody can point at the re
 
 ## Examples
 
-- A tracked item: "auth logic duplicated across three services; every auth change costs three
-  pull requests" — with the interest stated, not just the defect.
+- A tracked item: "auth logic duplicated across three services; every auth change costs three pull requests" — with the interest stated, not just the defect.
 - A standing share of each iteration allocated to debt items chosen by the team.
 
 ## What Good Looks Like
@@ -41,10 +40,8 @@ plain mistakes.
 ## Best Practices
 
 - Record the interest: what this costs per change, per incident, or per onboarding.
-- Distinguish a deliberate trade-off taken with reason from accidental mess; they need different
-  responses.
-- Repay continuously in small pieces. A big-bang rewrite proposal loses to feature work every
-  time.
+- Distinguish a deliberate trade-off taken with reason from accidental mess; they need different responses.
+- Repay continuously in small pieces. A big-bang rewrite proposal loses to feature work every time.
 - Attach repayment to work already touching that code, which is when it is cheapest.
 - Tie it to evidence — change failure rate, lead time, incident causes — so it argues for itself.
 

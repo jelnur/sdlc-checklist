@@ -29,10 +29,8 @@ the other worse.
 
 ## Examples
 
-- A dashboard computing all four from deployment events and incident records, per team, updated
-  weekly.
-- Lead time measured from first commit to production release, so the queueing between stages is
-  visible.
+- A dashboard computing all four from deployment events and incident records, per team, updated weekly.
+- Lead time measured from first commit to production release, so the queueing between stages is visible.
 
 ## What Good Looks Like
 

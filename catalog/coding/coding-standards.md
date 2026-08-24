@@ -30,8 +30,7 @@ logic.
 ## Examples
 
 - `ruff format` and `ruff check` pinned in `pyproject.toml`, run as a required CI check.
-- A shared ESLint and Prettier config published as an internal package and extended by every
-  repository.
+- A shared ESLint and Prettier config published as an internal package and extended by every repository.
 
 ## What Good Looks Like
 

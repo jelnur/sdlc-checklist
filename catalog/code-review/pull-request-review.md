@@ -59,8 +59,7 @@ share of changes merged with no substantive comment.
 - Thousand-line pull requests, which get approved without being read.
 - Rubber-stamp approvals, which convert the gate into theatre.
 - Nitpicking style that a formatter should own.
-- One person as the sole reviewer for everything, which is a bottleneck and a single point of
-  knowledge.
+- One person as the sole reviewer for everything, which is a bottleneck and a single point of knowledge.
 
 ## Tooling
 

@@ -32,8 +32,7 @@ breaks first, on a schedule you chose rather than during a launch.
 ## Examples
 
 - A k6 script replaying the real ratio of read to write endpoints at two times peak traffic.
-- A soak test held at expected load for eight hours to expose a memory leak that a ten-minute
-  run cannot.
+- A soak test held at expected load for eight hours to expose a memory leak that a ten-minute run cannot.
 
 ## What Good Looks Like
 
@@ -43,8 +42,7 @@ data volume, and results are compared run over run rather than read once.
 ## Best Practices
 
 - Write the target down first. Without a number, the result is unreadable.
-- Model the real traffic mix and think time; uniform requests to one endpoint measure nothing
-  useful.
+- Model the real traffic mix and think time; uniform requests to one endpoint measure nothing useful.
 - Use production-like data volume. Query plans change with table size.
 - Report percentiles, not averages, and record the resource ceiling that was hit.
 - Run it on a schedule so regressions surface as a trend.

@@ -28,10 +28,8 @@ everyone knows what is in scope and what is not.
 
 ## Examples
 
-- A two-week sprint planning session that selects backlog items up to the team's recent
-  throughput and stops there.
-- Quarterly planning that fixes objectives while leaving the item-level selection to each
-  iteration.
+- A two-week sprint planning session that selects backlog items up to the team's recent throughput and stops there.
+- Quarterly planning that fixes objectives while leaving the item-level selection to each iteration.
 
 ## What Good Looks Like
 

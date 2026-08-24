@@ -28,8 +28,7 @@ need: if naming what happened is career-risking, the account you get will be inc
 
 ## Examples
 
-- A postmortem covering timeline, impact, contributing causes, what went well, and action
-  items with owners and dates.
+- A postmortem covering timeline, impact, contributing causes, what went well, and action items with owners and dates.
 - A postmortem for a near miss, where luck rather than design prevented an outage.
 
 ## What Good Looks Like
@@ -41,12 +40,10 @@ as feature work.
 ## Best Practices
 
 - Trigger it on objective criteria, not on how bad it felt.
-- Describe systems and decisions, not people. "The deploy tool allowed X" beats "the engineer
-  did X".
+- Describe systems and decisions, not people. "The deploy tool allowed X" beats "the engineer did X".
 - Ask what made the wrong action look reasonable at the time.
 - Every action item gets an owner and a date, in the normal tracker.
-- Publish internally, and read the archive periodically; the pattern across ten postmortems is
-  worth more than any one.
+- Publish internally, and read the archive periodically; the pattern across ten postmortems is worth more than any one.
 - Include what went well, so the things that worked are kept deliberately.
 
 ## Automation
