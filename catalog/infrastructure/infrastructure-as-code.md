@@ -21,7 +21,6 @@ sources:
     url: https://itrevolution.com/product/accelerate/
     type: book
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

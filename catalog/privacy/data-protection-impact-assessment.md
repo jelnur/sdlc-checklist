@@ -21,7 +21,6 @@ sources:
     url: https://www.nist.gov/privacy-framework
     type: standard
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

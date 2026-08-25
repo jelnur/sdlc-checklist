@@ -18,7 +18,6 @@ sources:
     url: https://owaspsamm.org/model/governance/education-and-guidance/
     type: standard
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

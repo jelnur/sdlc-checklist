@@ -18,7 +18,6 @@ sources:
     url: http://c2.com/doc/oopsla92.html
     type: paper
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

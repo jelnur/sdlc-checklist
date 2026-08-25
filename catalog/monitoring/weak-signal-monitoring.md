@@ -22,7 +22,6 @@ sources:
     url: https://books.google.com/books/about/Managing_the_Unexpected.html?id=GU55MJOp1OcC
     type: book
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

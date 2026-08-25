@@ -18,7 +18,6 @@ sources:
     url: https://research.google/pubs/modern-code-review-a-case-study-at-google/
     type: paper
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

@@ -21,7 +21,6 @@ sources:
     url: https://www.microsoft.com/en-us/securityengineering/sdl
     type: vendor-doc
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

@@ -21,7 +21,6 @@ sources:
     url: https://www.section508.gov/
     type: practice-report
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

@@ -18,7 +18,6 @@ sources:
     url: https://csrc.nist.gov/pubs/sp/800/34/r1/upd1/final
     type: standard
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

@@ -18,7 +18,6 @@ sources:
     url: https://www.nngroup.com/articles/usability-testing-101/
     type: practice-report
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

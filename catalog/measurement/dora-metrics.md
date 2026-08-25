@@ -18,7 +18,6 @@ sources:
     url: https://dora.dev/guides/dora-metrics/
     type: practice-report
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

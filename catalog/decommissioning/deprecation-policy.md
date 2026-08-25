@@ -21,7 +21,6 @@ sources:
     url: https://semver.org/
     type: standard
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

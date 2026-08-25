@@ -18,7 +18,6 @@ sources:
     url: https://www.iso.org/standard/63712.html
     type: standard
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

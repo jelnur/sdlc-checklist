@@ -18,7 +18,6 @@ sources:
     url: https://continuousdelivery.com/
     type: book
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

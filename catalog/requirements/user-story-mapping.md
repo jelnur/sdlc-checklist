@@ -18,7 +18,6 @@ sources:
     url: https://scrumguides.org/scrum-guide.html
     type: standard
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose

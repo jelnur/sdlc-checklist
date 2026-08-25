@@ -417,7 +417,7 @@ function main() {
         <div class="entry-meta">${meta}</div>
       </div>
       <article class="prose">${renderMarkdown(e.body)}</article>
-      <footer>Status: ${esc(e.status)} &middot; generated_by: ${esc(e.generated_by)}</footer>
+      <footer>Status: ${esc(e.status)}</footer>
     </div>`;
     writeFileSync(
       join(dir, "index.html"),

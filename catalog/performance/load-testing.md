@@ -21,7 +21,6 @@ sources:
     url: https://grafana.com/load-testing/types-of-load-testing/
     type: vendor-doc
 status: draft
-generated_by: assistant:claude-opus-5
 ---
 
 ## Purpose
